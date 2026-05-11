@@ -18,7 +18,7 @@ const CustomizedLabel = ({ x, y, stroke, value }: LabelProps) => (
   </text>
 );
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number; stroke: string }>; label?: string }) => {
   if (!active || !payload?.length) return null;
   const colors: Record<string, string> = {
     users: '#7C3AED',
@@ -41,7 +41,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       minWidth: '140px',
     }}>
       <p style={{ color: '#6B7280', marginBottom: 6, fontWeight: 600, borderBottom: '1px solid #F3F4F6', paddingBottom: 4 }}>{label}</p>
-      {payload.map((item: any) => (
+      {payload.map((item: { dataKey: string; value: number; stroke: string }) => (
         <div key={item.dataKey} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 3 }}>
           <span style={{ color: colors[item.dataKey] ?? item.stroke, fontWeight: 500 }}>
             {labels[item.dataKey] ?? item.dataKey}

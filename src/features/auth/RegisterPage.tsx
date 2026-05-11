@@ -72,9 +72,10 @@ export default function RegisterPage() {
           state: { email: form.email, flow: 'register' },
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string }; message?: string };
       const msg =
-        err?.data?.message || err?.message || 'Signup failed. Please try again.';
+        apiErr?.data?.message || apiErr?.message || 'Signup failed. Please try again.';
       setApiError(msg);
     } finally {
       setIsLoading(false);

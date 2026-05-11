@@ -38,7 +38,7 @@ const getIndicatorStyle = (index: number) => {
   return { backgroundColor: COLORS[index] ?? '#10B981' };
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) => {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   const index = data.findIndex((d) => d.name === item.name);

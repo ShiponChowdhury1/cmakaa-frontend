@@ -138,6 +138,12 @@ export default function PardnaDetailPage() {
   const pardna = id && PARDNAS[id];
   const schedules = id ? PAYOUT_SCHEDULES[id] : [];
 
+  const calendarDays = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentMonth));
+    const end = endOfWeek(endOfMonth(currentMonth));
+    return eachDayOfInterval({ start, end });
+  }, [currentMonth]);
+
   if (!pardna) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -151,11 +157,6 @@ export default function PardnaDetailPage() {
   const nextPayout = schedules.find((s) => s.round === nextRound);
 
   const monthName = format(currentMonth, 'MMMM yyyy');
-  const calendarDays = useMemo(() => {
-    const start = startOfWeek(startOfMonth(currentMonth));
-    const end = endOfWeek(endOfMonth(currentMonth));
-    return eachDayOfInterval({ start, end });
-  }, [currentMonth]);
 
   const highlightedDay = schedules.find((schedule) =>
     isSameDay(new Date(schedule.date), selectedDate)

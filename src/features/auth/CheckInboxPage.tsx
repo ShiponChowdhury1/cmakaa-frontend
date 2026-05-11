@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 
 export default function CheckInboxPage() {
   const location = useLocation();
   const { method, value } = (location.state as { method?: string; value?: string }) || {};
-  const [, setResent] = useState(false);
 
   const handleTryDifferent = () => {
     window.history.back();

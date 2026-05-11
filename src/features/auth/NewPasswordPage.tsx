@@ -17,7 +17,7 @@ export default function NewPasswordPage() {
   const [resetPassword] = useResetPasswordMutation();
 
   // Reset token comes from OTP verify response (forgot-password flow)
-  const { token: resetToken, email } = (location.state as { token?: string; email?: string }) || {};
+  const { token: resetToken } = (location.state as { token?: string; email?: string }) || {};
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -54,8 +54,9 @@ export default function NewPasswordPage() {
       if (result.success) {
         navigate('/auth/login', { replace: true });
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || 'Failed to reset password. Please try again.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      const msg = apiErr?.data?.message || 'Failed to reset password. Please try again.';
       setApiError(msg);
     } finally {
       setIsLoading(false);

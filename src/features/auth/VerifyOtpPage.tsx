@@ -58,8 +58,9 @@ export default function VerifyOtpPage() {
           navigate('/auth/login', { replace: true });
         }
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || 'Invalid OTP. Please try again.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      const msg = apiErr?.data?.message || 'Invalid OTP. Please try again.';
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -78,8 +79,9 @@ export default function VerifyOtpPage() {
         setSuccessMsg('OTP resent successfully!');
         restart();
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || 'Failed to resend OTP.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      const msg = apiErr?.data?.message || 'Failed to resend OTP.';
       setError(msg);
     } finally {
       setIsResending(false);

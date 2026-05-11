@@ -35,8 +35,9 @@ export default function ForgotPasswordPage() {
           state: { email: value, flow: 'forgot-password' },
         });
       }
-    } catch (err: any) {
-      const msg = err?.data?.message || 'Failed to send reset code. Please try again.';
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      const msg = apiErr?.data?.message || 'Failed to send reset code. Please try again.';
       setError(msg);
     } finally {
       setIsLoading(false);

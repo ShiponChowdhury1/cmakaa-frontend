@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Printer, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Printer, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import TrustSummaryModal from './TrustSummaryModal';
 
 type Rating = 'Strong' | 'Fair' | 'Developing' | 'Weak';
 type Status = 'active' | 'suspended';
@@ -49,6 +50,7 @@ const PAGE_SIZE = 10;
 export default function ParticipantsTab({ search }: { search: string }) {
   const [data, setData]   = useState(PARTICIPANTS);
   const [page, setPage]   = useState(1);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
 
   const filtered    = data.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -61,6 +63,12 @@ export default function ParticipantsTab({ search }: { search: string }) {
     setData(prev => prev.map(p =>
       p.id === id ? { ...p, status: p.status === 'active' ? 'suspended' : 'active' } : p
     ));
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this participant?')) {
+      setData(prev => prev.filter(p => p.id !== id));
+    }
+  };
 
   return (
     <div className="space-y-0">
@@ -100,14 +108,16 @@ export default function ParticipantsTab({ search }: { search: string }) {
                     }`}>{p.status}</span>
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      {/* Print / View Trust Summary */}
                       <button
-                        title="Print Trust Summary"
-                        onClick={() => window.print()}
+                        title="View Trust Summary"
+                        onClick={() => setSelectedParticipant(p)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-[var(--color-dark)] hover:bg-gray-100 transition-all cursor-pointer border-none bg-transparent"
                       >
                         <Printer size={15} />
                       </button>
+                      {/* Suspend / Activate */}
                       <button
                         title={p.status === 'active' ? 'Suspend' : 'Activate'}
                         onClick={() => toggleSuspend(p.id)}
@@ -126,6 +136,14 @@ export default function ParticipantsTab({ search }: { search: string }) {
                             <circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/>
                           </svg>
                         )}
+                      </button>
+                      {/* Delete */}
+                      <button
+                        title="Delete Participant"
+                        onClick={() => handleDelete(p.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer border-none bg-transparent"
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </td>
@@ -162,6 +180,14 @@ export default function ParticipantsTab({ search }: { search: string }) {
           </div>
         </div>
       </div>
+
+      {/* Trust Summary Modal */}
+      {selectedParticipant && (
+        <TrustSummaryModal
+          participant={selectedParticipant}
+          onClose={() => setSelectedParticipant(null)}
+        />
+      )}
     </div>
   );
 }

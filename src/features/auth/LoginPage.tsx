@@ -60,9 +60,10 @@ export default function LoginPage() {
           navigate('/dashboard', { replace: true });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string }; message?: string };
       const msg =
-        err?.data?.message || err?.message || 'Login failed. Please try again.';
+        apiErr?.data?.message || apiErr?.message || 'Login failed. Please try again.';
       setApiError(msg);
     } finally {
       setIsLoading(false);
