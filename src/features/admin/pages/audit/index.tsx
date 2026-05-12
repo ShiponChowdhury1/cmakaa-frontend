@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import StatsCard from '../../components/StatsCard';
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
+import { useGetAdminAuditLogsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
+import type { AdminAuditLog } from '@/store/features/adminDashboard/adminDashboardApi.types';
 
 type LogType = 'payment' | 'payout' | 'status' | 'admin' | 'lifecycle' | 'kyc' | 'trust' | 'auth';
 
 interface AuditLog {
-  id: number;
+  id: string;
   time: string;
   user: string;
   action: string;
@@ -16,28 +16,43 @@ interface AuditLog {
   isSystem?: boolean;
 }
 
-const LOGS: AuditLog[] = [
-  { id:  1, time: '2026-04-15 09:12', user: 'Sarah J.',  action: 'Recorded payment',        target: 'Family Monthly — Grace M.',         type: 'payment'   },
-  { id:  2, time: '2026-04-15 08:45', user: 'System',    action: 'Marked payment overdue',   target: 'Community Build — Participant #4',  type: 'status',   isSystem: true },
-  { id:  3, time: '2026-04-14 17:30', user: 'Admin',     action: 'Suspended user',           target: 'James King',                        type: 'admin'     },
-  { id:  4, time: '2026-04-14 16:00', user: 'Mike T.',   action: 'Completed cycle',          target: 'Summer Holiday Fund',               type: 'lifecycle' },
-  { id:  5, time: '2026-04-14 14:20', user: 'Donna R.',  action: 'Created pardna',           target: 'Community Build',                   type: 'lifecycle' },
-  { id:  6, time: '2026-04-14 10:00', user: 'Sarah J.',  action: 'Recorded payout',          target: 'Work Friends Savings — David K.',   type: 'payout'    },
-  { id:  7, time: '2026-04-13 12:15', user: 'System',    action: 'Trust score updated',      target: 'Grace M. → 45',                    type: 'trust',    isSystem: true },
-  { id:  8, time: '2026-04-13 11:00', user: 'Admin',     action: 'KYC Approved',             target: 'Michael Harris',                    type: 'kyc'       },
-  { id:  9, time: '2026-04-13 09:30', user: 'Hassan T.', action: 'Recorded payment',         target: 'Work Friends Savings — Tomi B.',    type: 'payment'   },
-  { id: 10, time: '2026-04-12 17:00', user: 'System',    action: 'Pardna closed',            target: 'Youth Club Savings',                type: 'lifecycle', isSystem: true },
-  { id: 11, time: '2026-04-12 14:40', user: 'Admin',     action: 'KYC Rejected',             target: 'Kevin Stewart',                     type: 'kyc'       },
-  { id: 12, time: '2026-04-12 11:20', user: 'Nathan H.', action: 'Recorded payment',         target: 'Summer Holiday Fund — Marcus B.',   type: 'payment'   },
-  { id: 13, time: '2026-04-11 16:55', user: 'System',    action: 'Marked payment overdue',   target: 'Business Starter — Kevin S.',       type: 'status',   isSystem: true },
-  { id: 14, time: '2026-04-11 14:00', user: 'Admin',     action: 'New banker registered',    target: 'Paul M.',                           type: 'admin'     },
-  { id: 15, time: '2026-04-11 10:30', user: 'Ngozi E.',  action: 'Recorded payout',          target: 'Community Build — Maya W.',         type: 'payout'    },
-  { id: 16, time: '2026-04-10 15:45', user: 'System',    action: 'Trust score updated',      target: 'James K. → 72',                    type: 'trust',    isSystem: true },
-  { id: 17, time: '2026-04-10 13:10', user: 'Admin',     action: 'Settings updated',         target: 'Notification Preferences',          type: 'admin'     },
-  { id: 18, time: '2026-04-10 09:00', user: 'Andrea C.', action: 'Created pardna',           target: 'Wedding Savings',                   type: 'lifecycle' },
-  { id: 19, time: '2026-04-09 16:30', user: 'Paul M.',   action: 'Recorded payment',         target: 'Business Starter — Kevin S.',       type: 'payment'   },
-  { id: 20, time: '2026-04-09 11:00', user: 'Admin',     action: 'User unsuspended',         target: 'James King',                        type: 'admin'     },
-];
+// Map API actions to log types
+const getLogType = (action: string): LogType => {
+  if (action.includes('PARTICIPANT')) return 'lifecycle';
+  if (action.includes('PARDNA')) return 'lifecycle';
+  if (action.includes('PAYMENT')) return 'payment';
+  if (action.includes('PAYOUT')) return 'payout';
+  if (action.includes('KYC')) return 'kyc';
+  if (action.includes('TRUST')) return 'trust';
+  if (action.includes('USER')) return 'admin';
+  return 'auth';
+};
+
+// Map API audit log to display format
+const mapToAuditLog = (apiLog: AdminAuditLog): AuditLog => {
+  const metadata = apiLog.metadata as Record<string, unknown>;
+  const userInitials = `${apiLog.actor.firstName?.charAt(0) || 'A'}${apiLog.actor.lastName?.charAt(0) || 'A'}`;
+  const userName = `${apiLog.actor.firstName} ${apiLog.actor.lastName}`.trim();
+  
+  let target = '';
+  if (metadata?.type === 'participant_join') {
+    target = `${metadata.fullName} joined`;
+  } else if (metadata?.type === 'pardna_creation') {
+    target = `${metadata.name}`;
+  } else {
+    target = apiLog.entityType;
+  }
+
+  return {
+    id: apiLog.id,
+    time: new Date(apiLog.createdAt).toLocaleDateString('en-GB') + ' ' + new Date(apiLog.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    user: userName || userInitials,
+    action: apiLog.action.split('_').join(' '),
+    target,
+    type: getLogType(apiLog.action),
+    isSystem: apiLog.actor.firstName === 'System',
+  };
+};
 
 // ─── Badge styles ──────────────────────────────────────────────────────────────
 
@@ -52,46 +67,71 @@ const typeMeta: Record<LogType, { label: string; cls: string }> = {
   auth:      { label: 'auth',      cls: 'text-blue-600   bg-blue-50   border-blue-200'    },
 };
 
-// ─── Stats ─────────────────────────────────────────────────────────────────────
-
-const paymentCount   = LOGS.filter(l => l.type === 'payment' || l.type === 'payout').length;
-const adminCount     = LOGS.filter(l => l.type === 'admin').length;
-const kycCount       = LOGS.filter(l => l.type === 'kyc').length;
-
-const stats = [
-  {
-    label: 'Total Events', value: String(LOGS.length), iconBg: 'bg-purple-50',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
-  },
-  {
-    label: 'Payments & Payouts', value: String(paymentCount), iconBg: 'bg-emerald-50',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>,
-  },
-  {
-    label: 'Admin Actions', value: String(adminCount), iconBg: 'bg-red-50',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
-  },
-  {
-    label: 'KYC Events', value: String(kycCount), iconBg: 'bg-blue-50',
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2"><path d="M9 12l2 2 4-4"/><path d="M12 2a10 10 0 110 20 10 10 0 010-20z"/></svg>,
-  },
-];
-
 const PAGE_SIZE = 10;
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function AuditLogPage() {
   const [search, setSearch] = useState('');
-  const [page,   setPage]   = useState(1);
+  const [page, setPage] = useState(1);
 
-  const filtered   = LOGS.filter(l =>
-    l.action.toLowerCase().includes(search.toLowerCase()) ||
-    l.user.toLowerCase().includes(search.toLowerCase())   ||
-    l.target.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Fetch audit logs from API
+  const { data: response, isLoading, isError } = useGetAdminAuditLogsQuery({
+    page,
+    limit: PAGE_SIZE,
+    search: search.trim() || undefined,
+  });
+
+  const auditLogs = (response?.data ?? []).map(mapToAuditLog);
+  const pagination = response?.meta.pagination;
+  const totalItems = pagination?.total ?? auditLogs.length;
+  const totalPages = pagination?.totalPages ?? 1;
+
+  // Calculate stats from logs
+  const paymentCount = auditLogs.filter(l => l.type === 'payment' || l.type === 'payout').length;
+  const adminCount = auditLogs.filter(l => l.type === 'admin').length;
+  const kycCount = auditLogs.filter(l => l.type === 'kyc').length;
+
+  const stats = [
+    {
+      label: 'Total Events', value: String(totalItems), iconBg: 'bg-purple-50',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>,
+    },
+    {
+      label: 'Payments & Payouts', value: String(paymentCount), iconBg: 'bg-emerald-50',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>,
+    },
+    {
+      label: 'Admin Actions', value: String(adminCount), iconBg: 'bg-red-50',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+    },
+    {
+      label: 'KYC Events', value: String(kycCount), iconBg: 'bg-blue-50',
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2"><path d="M9 12l2 2 4-4"/><path d="M12 2a10 10 0 110 20 10 10 0 010-20z"/></svg>,
+    },
+  ];
+
+  const paginated = auditLogs.slice(0, PAGE_SIZE);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-5 animate-fade-in">
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
+          Loading audit logs...
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-5 animate-fade-in">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          Failed to load audit logs.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -101,7 +141,7 @@ export default function AuditLogPage() {
         <h1 className="text-xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
           Audit Log
         </h1>
-        <p className="text-sm text-[var(--color-gray-400)] mt-0.5">{LOGS.length} total events recorded</p>
+        <p className="text-sm text-[var(--color-gray-400)] mt-0.5">{totalItems} total events recorded</p>
       </div>
 
       {/* Stats */}
@@ -147,8 +187,6 @@ export default function AuditLogPage() {
                       <span className={`text-sm font-semibold ${
                         log.isSystem
                           ? 'text-[var(--color-dark)]'
-                          : log.user === 'Admin'
-                          ? 'text-[var(--color-primary)]'
                           : 'text-[var(--color-primary)]'
                       }`}>{log.user}</span>
                     </td>
@@ -158,11 +196,7 @@ export default function AuditLogPage() {
 
                     {/* Target */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-sm ${
-                        log.target.includes('—') || log.target.includes('→')
-                          ? 'text-[var(--color-primary)]'
-                          : 'text-[var(--color-gray-500)]'
-                      }`}>{log.target}</span>
+                      <span className="text-sm text-[var(--color-gray-500)]">{log.target}</span>
                     </td>
 
                     {/* Type badge */}
@@ -183,10 +217,10 @@ export default function AuditLogPage() {
           <p className="text-xs text-[var(--color-gray-400)]">
             Showing{' '}
             <span className="font-semibold text-[var(--color-dark)]">
-              {Math.min((page-1)*PAGE_SIZE+1, filtered.length)}–{Math.min(page*PAGE_SIZE, filtered.length)}
+              {Math.min((page-1)*PAGE_SIZE+1, totalItems)}–{Math.min(page*PAGE_SIZE, totalItems)}
             </span>{' '}
             of{' '}
-            <span className="font-semibold text-[var(--color-dark)]">{filtered.length}</span>{' '}
+            <span className="font-semibold text-[var(--color-dark)]">{totalItems}</span>{' '}
             events
           </p>
 

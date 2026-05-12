@@ -35,6 +35,22 @@ export interface ResendOtpRequest {
   email: string;
 }
 
+export interface UpdateProfileData {
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface UpdateProfileRequest {
+  data: UpdateProfileData;
+  profilePicture?: File | null;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 /* ── Response Types ── */
 
 /** Generic API response wrapper */
@@ -68,4 +84,21 @@ export interface RefreshResponseData {
   token: string;
   refreshToken: string;
   user: AuthUser;
+}
+
+/** Current user profile response from /user/me */
+export interface MeResponseData {
+  id: string;
+  role: string;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  profilePicture: string | null;
+  addressId: string | null;
+  kycStatus: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
 }

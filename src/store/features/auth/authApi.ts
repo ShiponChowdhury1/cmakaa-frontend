@@ -11,10 +11,50 @@ import type {
   ForgotPasswordResponseData,
   VerifyOtpResponseData,
   RefreshResponseData,
+  MeResponseData,
+  UpdateProfileRequest,
+  ChangePasswordRequest,
 } from './authApi.types';
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    // GET /user/me
+    me: builder.query<ApiResponse<MeResponseData>, void>({
+      query: () => ({
+        url: '/user/me',
+        method: 'GET',
+      }),
+      providesTags: ['User'],
+    }),
+
+    // PATCH /user/update-profile
+    updateProfile: builder.mutation<ApiResponse<MeResponseData | null>, UpdateProfileRequest>({
+      query: ({ data, profilePicture }) => {
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(data));
+
+        if (profilePicture) {
+          formData.append('profilePicture', profilePicture);
+        }
+
+        return {
+          url: '/user/update-profile',
+          method: 'PATCH',
+          body: formData,
+        };
+      },
+      invalidatesTags: ['User'],
+    }),
+
+    // PATCH /user/change-password
+    changePassword: builder.mutation<ApiResponse<null>, ChangePasswordRequest>({
+      query: (body) => ({
+        url: '/user/change-password',
+        method: 'PATCH',
+        body,
+      }),
+    }),
+
     // POST /auth/signup-banker
     signupBanker: builder.mutation<ApiResponse, SignupBankerRequest>({
       query: (body) => ({
@@ -88,6 +128,9 @@ export const authApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useMeQuery,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
   useSignupBankerMutation,
   useLoginMutation,
   useVerifyOtpMutation,

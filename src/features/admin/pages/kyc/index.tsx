@@ -1,76 +1,119 @@
 import { useState } from 'react';
 import StatsCard from '../../components/StatsCard';
+import { useGetAdminKycQuery, useApproveAdminKycMutation, useDeclineAdminKycMutation } from '@/store/features/adminDashboard/adminDashboardApi';
+import type { AdminKycApplication } from '@/store/features/adminDashboard/adminDashboardApi.types';
 
-const kycApplications = [
-  { id: 'KYC001', name: 'Sarah Johnson',  email: 'sarah.j@email.com',  phone: '+44 7700 900001', submittedAt: '2026-04-15 08:30', documents: ['ID Card', 'Proof of Address'], status: 'pending'  as const },
-  { id: 'KYC002', name: 'Donna Richards', email: 'donna.r@email.com',  phone: '+44 7700 900003', submittedAt: '2026-04-14 16:45', documents: ['Passport', 'Utility Bill'],    status: 'pending'  as const },
-  { id: 'KYC003', name: 'James King',     email: 'james.k@email.com',  phone: '+44 7700 900004', submittedAt: '2026-04-14 11:20', documents: ['Driver License'],               status: 'pending'  as const },
-  { id: 'KYC004', name: 'Mike Thompson',  email: 'mike.t@email.com',   phone: '+44 7700 900002', submittedAt: '2026-04-13 09:00', documents: ['ID Card', 'Bank Statement'],    status: 'approved' as const },
-  { id: 'KYC005', name: 'Grace Miller',   email: 'grace.m@email.com',  phone: '+44 7700 900005', submittedAt: '2026-04-12 14:10', documents: ['Passport'],                     status: 'rejected' as const },
-];
-
-const pendingCount  = kycApplications.filter(k => k.status === 'pending').length;
-const approvedCount = kycApplications.filter(k => k.status === 'approved').length;
-const rejectedCount = kycApplications.filter(k => k.status === 'rejected').length;
-
-const stats = [
-  {
-    label: 'Total Applications',
-    value: String(kycApplications.length),
-    iconBg: 'bg-blue-50',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Pending Review',
-    value: String(pendingCount),
-    iconBg: 'bg-amber-50',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Approved',
-    value: String(approvedCount),
-    iconBg: 'bg-emerald-50',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
-        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-        <path d="M22 4L12 14.01l-3-3" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Rejected',
-    value: String(rejectedCount),
-    iconBg: 'bg-red-50',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M15 9l-6 6M9 9l6 6" />
-      </svg>
-    ),
-  },
-];
+const PAGE_SIZE = 10;
 
 export default function KycReviewPage() {
-  const [data, setData] = useState(kycApplications);
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [selectedKycId, setSelectedKycId] = useState<string | null>(null);
 
-  const pendingKyc   = data.filter(k => k.status === 'pending');
-  const processedKyc = data.filter(k => k.status !== 'pending');
+  // Fetch KYC applications
+  const { data: response, isLoading, isError } = useGetAdminKycQuery({
+    limit: PAGE_SIZE,
+  });
 
-  const handleApprove = (id: string) =>
-    setData(prev => prev.map(k => k.id === id ? { ...k, status: 'approved' as const } : k));
+  // Mutations
+  const [approveKyc] = useApproveAdminKycMutation();
+  const [declineKyc] = useDeclineAdminKycMutation();
 
-  const handleReject = (id: string) =>
-    setData(prev => prev.map(k => k.id === id ? { ...k, status: 'rejected' as const } : k));
+  const kycApplications = response?.data ?? [];
+  const pagination = response?.meta.pagination;
+  const statusMeta = response?.meta.status;
+
+  const pendingCount = statusMeta?.PENDING ?? 0;
+  const approvedCount = statusMeta?.APPROVED ?? 0;
+  const rejectedCount = statusMeta?.REJECTED ?? 0;
+  const totalCount = statusMeta?.total ?? pagination?.total ?? 0;
+
+  const stats = [
+    {
+      label: 'Total Applications',
+      value: String(totalCount),
+      iconBg: 'bg-blue-50',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Pending Review',
+      value: String(pendingCount),
+      iconBg: 'bg-amber-50',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Approved',
+      value: String(approvedCount),
+      iconBg: 'bg-emerald-50',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+          <path d="M22 4L12 14.01l-3-3" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Rejected',
+      value: String(rejectedCount),
+      iconBg: 'bg-red-50',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M15 9l-6 6M9 9l6 6" />
+        </svg>
+      ),
+    },
+  ];
+
+  const pendingKyc = kycApplications.filter(k => k.status === 'PENDING');
+  const processedKyc = kycApplications.filter(k => k.status !== 'PENDING');
+
+  const handleApprove = async (id: string) => {
+    try {
+      await approveKyc(id).unwrap();
+    } catch (error) {
+      console.error('Failed to approve KYC:', error);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await declineKyc({ kycId: id, rejectionReason }).unwrap();
+      setRejectionReason('');
+      setSelectedKycId(null);
+    } catch (error) {
+      console.error('Failed to reject KYC:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-500">
+          Loading KYC applications...
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          Failed to load KYC applications.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -110,7 +153,7 @@ export default function KycReviewPage() {
               Pending Review ({pendingKyc.length})
             </p>
             <div className="space-y-2">
-              {pendingKyc.map((k) => (
+              {pendingKyc.map((k: AdminKycApplication) => (
                 <div
                   key={k.id}
                   className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-amber-100 bg-amber-50/40 hover:bg-amber-50 transition-colors"
@@ -124,42 +167,68 @@ export default function KycReviewPage() {
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[var(--color-dark)]">{k.name}</p>
+                      <p className="text-sm font-semibold text-[var(--color-dark)]">{k.user.firstName} {k.user.lastName}</p>
                       <p className="text-xs text-[var(--color-gray-400)]">
-                        {k.phone} • Submitted {k.submittedAt}
+                        {k.user.phoneNumber} • Submitted {new Date(k.submittedAt).toLocaleDateString('en-GB')}
                       </p>
-                      {/* Documents */}
+                      {/* Document type */}
                       <div className="flex items-center gap-1.5 mt-1.5">
-                        {k.documents.map((doc) => (
-                          <span key={doc} className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
-                            {doc}
-                          </span>
-                        ))}
+                        <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                          {k.documentType}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 ml-4">
-                    {/* Reject */}
-                    <button
-                      onClick={() => handleReject(k.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-xs font-medium hover:bg-red-50 transition-all cursor-pointer bg-transparent"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
-                      </svg>
-                      Reject
-                    </button>
-                    {/* Approve */}
-                    <button
-                      onClick={() => handleApprove(k.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-medium hover:bg-orange-600 active:scale-95 transition-all cursor-pointer border-none shadow-sm"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" />
-                      </svg>
-                      Approve
-                    </button>
+                    {/* Decline button with optional reason input */}
+                    <div className="flex items-center gap-1">
+                      {selectedKycId === k.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            placeholder="Rejection reason (optional)"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            className="px-2 py-1 text-xs border border-red-200 rounded bg-white"
+                          />
+                          <button
+                            onClick={() => handleReject(k.id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-all cursor-pointer border-none"
+                          >
+                            Send
+                          </button>
+                          <button
+                            onClick={() => setSelectedKycId(null)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-200 text-gray-500 text-xs font-medium hover:bg-gray-50 transition-all cursor-pointer bg-white"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setSelectedKycId(k.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-xs font-medium hover:bg-red-50 transition-all cursor-pointer bg-transparent"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
+                            </svg>
+                            Decline
+                          </button>
+                          {/* Approve */}
+                          <button
+                            onClick={() => handleApprove(k.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-medium hover:bg-orange-600 active:scale-95 transition-all cursor-pointer border-none shadow-sm"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" />
+                            </svg>
+                            Approve
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -168,7 +237,7 @@ export default function KycReviewPage() {
         )}
 
         {/* Empty state for pending */}
-        {pendingKyc.length === 0 && (
+        {pendingKyc.length === 0 && processedKyc.length > 0 && (
           <div className="flex flex-col items-center justify-center py-10 mb-4">
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
@@ -185,7 +254,7 @@ export default function KycReviewPage() {
           <div>
             <p className="text-xs font-semibold text-[var(--color-gray-400)] mb-3">Processed</p>
             <div className="space-y-2">
-              {processedKyc.map((k) => (
+              {processedKyc.map((k: AdminKycApplication) => (
                 <div
                   key={k.id}
                   className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
@@ -193,9 +262,9 @@ export default function KycReviewPage() {
                   <div className="flex items-center gap-3">
                     {/* Status icon */}
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                      k.status === 'approved' ? 'bg-emerald-100' : 'bg-red-100'
+                      k.status === 'APPROVED' ? 'bg-emerald-100' : 'bg-red-100'
                     }`}>
-                      {k.status === 'approved' ? (
+                      {k.status === 'APPROVED' ? (
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" /><path d="M9 12l2 2 4-4" />
                         </svg>
@@ -206,18 +275,18 @@ export default function KycReviewPage() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[var(--color-gray-500)]">{k.name}</p>
-                      <p className="text-xs text-[var(--color-gray-400)]">{k.phone} • {k.submittedAt}</p>
+                      <p className="text-sm font-medium text-[var(--color-gray-500)]">{k.user.firstName} {k.user.lastName}</p>
+                      <p className="text-xs text-[var(--color-gray-400)]">{k.user.phoneNumber} • {new Date(k.submittedAt).toLocaleDateString('en-GB')}</p>
                     </div>
                   </div>
 
                   {/* Status badge */}
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0 ${
-                    k.status === 'approved'
+                    k.status === 'APPROVED'
                       ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
                       : 'text-red-500 bg-red-50 border-red-200'
                   }`}>
-                    {k.status === 'approved' ? 'Approved' : 'Rejected'}
+                    {k.status === 'APPROVED' ? 'Approved' : 'Rejected'}
                   </span>
                 </div>
               ))}

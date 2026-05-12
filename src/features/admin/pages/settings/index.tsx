@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Bell, Eye, EyeOff, Globe, Lock, User } from 'lucide-react';
+import { useMeQuery } from '@/store/features/auth/authApi';
 
 const gradientStyle = {
   background: 'linear-gradient(90deg, #E57432 0%, #FF9C65 100%)',
@@ -177,6 +178,7 @@ function GradientButton({ children, onClick, className = '' }: GradientButtonPro
 }
 
 export default function SettingsPage() {
+  const { data: profileResponse, isLoading, isError } = useMeQuery();
   const [emailNotif, setEmailNotif] = useState(true);
   const [kycAlerts, setKycAlerts] = useState(true);
   const [exceptionAlerts, setExceptionAlerts] = useState(true);
@@ -187,6 +189,8 @@ export default function SettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const profile = profileResponse?.data;
 
   useEffect(() => {
     return () => {
@@ -208,6 +212,44 @@ export default function SettingsPage() {
       return nextPhoto;
     });
   };
+
+  const displayName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : 'Admin User';
+  const displayEmail = profile?.email ?? 'No email available';
+  const displayPhone = profile?.phoneNumber ?? 'No phone number available';
+  const avatarSrc = profilePhoto ?? profile?.profilePicture ?? null;
+  const profileInitials = profile
+    ? `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
+    : 'AU';
+  const joinedDate = profile?.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString('en-GB')
+    : 'Unknown';
+  const updatedDate = profile?.updatedAt
+    ? new Date(profile.updatedAt).toLocaleDateString('en-GB')
+    : 'Unknown';
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
+        <div className="max-w-6xl mx-auto space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500 shadow-sm">
+            Loading profile data...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
+        <div className="max-w-6xl mx-auto space-y-4">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">
+            Failed to load profile data.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
@@ -235,12 +277,12 @@ export default function SettingsPage() {
               <div className="flex flex-col sm:flex-row gap-5 mb-5">
                 <div className="flex flex-col items-center sm:items-start gap-3 shrink-0">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-[#E57432]/30 bg-[#FFF4EC] flex items-center justify-center shadow-sm">
-                    {profilePhoto ? (
-                      <img src={profilePhoto} alt="Admin profile preview" className="w-full h-full object-cover" />
+                    {avatarSrc ? (
+                      <img src={avatarSrc} alt={displayName} className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-center px-3">
-                        <div className="text-2xl mb-1">📷</div>
-                        <p className="text-[10px] font-semibold text-[#E57432] leading-tight">Upload</p>
+                        <div className="text-2xl mb-1">{profileInitials}</div>
+                        <p className="text-[10px] font-semibold text-[#E57432] leading-tight">Profile</p>
                       </div>
                     )}
                   </div>
@@ -256,10 +298,34 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 flex-1">
-                  <InputField label="Full Name" defaultValue="Shipon Chowdhury" />
-                  <InputField label="Email Address" type="email" defaultValue="shipon@mybeautypass.com" />
+                  <InputField label="Full Name" defaultValue={displayName} />
+                  <InputField label="Email Address" type="email" defaultValue={displayEmail} />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                <div className="rounded-xl bg-[#FFF8F2] border border-[#FFD2B1] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#E57432]">Username</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">@{profile?.username ?? 'admin'}</p>
+                </div>
+                <div className="rounded-xl bg-[#FFF8F2] border border-[#FFD2B1] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#E57432]">Phone</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">{displayPhone}</p>
+                </div>
+                <div className="rounded-xl bg-[#FFF8F2] border border-[#FFD2B1] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#E57432]">Role</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">{profile?.role ?? 'ADMIN'}</p>
+                </div>
+                <div className="rounded-xl bg-[#FFF8F2] border border-[#FFD2B1] px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#E57432]">Status</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">{profile?.isActive ? 'Active' : 'Inactive'}</p>
+                </div>
+                <div className="rounded-xl bg-[#FFF8F2] border border-[#FFD2B1] px-4 py-3 sm:col-span-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#E57432]">Account Timeline</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">Joined {joinedDate} • Updated {updatedDate}</p>
+                </div>
+              </div>
+
               <GradientButton className="self-end">Save Changes</GradientButton>
             </div>
           </Card>
