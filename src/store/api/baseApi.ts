@@ -35,9 +35,22 @@ const baseQueryWithReauth: BaseQueryFn<
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
+    // Get the current refreshToken from Redux store
+    const refreshToken = (api.getState() as RootState).auth.refreshToken;
+
+    if (!refreshToken) {
+      // No refresh token available — force logout
+      api.dispatch(logout());
+      return result;
+    }
+
     // Try to get a new accessToken via the refresh-token endpoint
     const refreshResult = await rawBaseQuery(
-      { url: '/auth/refresh-token', method: 'POST' },
+      {
+        url: '/auth/refresh-token',
+        method: 'POST',
+        body: { refreshToken },
+      },
       api,
       extraOptions,
     );
@@ -48,10 +61,11 @@ const baseQueryWithReauth: BaseQueryFn<
         data: { token: string; refreshToken: string; user: AuthUser };
       };
       if (res.success && res.data?.token) {
-        // Store new accessToken + user in Redux memory
+        // Store new accessToken + refreshToken + user in Redux + localStorage
         api.dispatch(
           setCredentials({
             accessToken: res.data.token,
+            refreshToken: res.data.refreshToken,
             user: res.data.user,
           }),
         );

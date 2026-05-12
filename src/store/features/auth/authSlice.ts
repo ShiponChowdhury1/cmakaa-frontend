@@ -19,20 +19,62 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
 }
 
+/* ── LocalStorage helpers ── */
+const AUTH_STORAGE_KEY = 'cmakaa_auth';
+
+function loadAuthFromStorage(): AuthState {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as {
+        user: AuthUser | null;
+        accessToken: string | null;
+        refreshToken: string | null;
+      };
+      if (parsed.accessToken) {
+        return {
+          user: parsed.user,
+          accessToken: parsed.accessToken,
+          refreshToken: parsed.refreshToken ?? null,
+          isAuthenticated: true,
+        };
+      }
+    }
+  } catch {
+    // corrupted storage — start fresh
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+  return { user: null, accessToken: null, refreshToken: null, isAuthenticated: false };
+}
+
+function saveAuthToStorage(state: AuthState) {
+  try {
+    localStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
+    );
+  } catch {
+    // storage full or blocked — silently ignore
+  }
+}
+
+function clearAuthFromStorage() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
 /* ── Initial State ──
- * accessToken lives ONLY in Redux memory.
- * refreshToken is an HttpOnly cookie set by the backend —
- * the frontend never reads or stores it.
- * On page refresh → /auth/refresh endpoint is hit to get a new accessToken.
+ * On app load we rehydrate from localStorage so the user
+ * stays logged-in across page reloads.
  */
-const initialState: AuthState = {
-  user: null,
-  accessToken: null,
-  isAuthenticated: false,
-};
+const initialState: AuthState = loadAuthFromStorage();
 
 /* ── Slice ── */
 const authSlice = createSlice({
@@ -40,20 +82,24 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Called after a successful login.
-     * Backend returns token in the response body;
-     * refreshToken is set as an HttpOnly cookie automatically.
+     * Called after a successful login or token refresh.
+     * Stores token + refreshToken + user in Redux AND localStorage.
      */
     setCredentials(
       state,
       action: PayloadAction<{
         user: AuthUser;
         accessToken: string;
+        refreshToken?: string;
       }>,
     ) {
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
+      if (action.payload.refreshToken) {
+        state.refreshToken = action.payload.refreshToken;
+      }
       state.isAuthenticated = true;
+      saveAuthToStorage(state);
     },
 
     /**
@@ -63,6 +109,7 @@ const authSlice = createSlice({
     setAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload;
       state.isAuthenticated = true;
+      saveAuthToStorage(state);
     },
 
     /**
@@ -70,15 +117,18 @@ const authSlice = createSlice({
      */
     setUser(state, action: PayloadAction<AuthUser>) {
       state.user = action.payload;
+      saveAuthToStorage(state);
     },
 
     /**
-     * Clears all auth state.
+     * Clears all auth state + localStorage.
      */
     logout(state) {
       state.user = null;
       state.accessToken = null;
+      state.refreshToken = null;
       state.isAuthenticated = false;
+      clearAuthFromStorage();
     },
   },
 });

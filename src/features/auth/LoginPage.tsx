@@ -49,6 +49,7 @@ export default function LoginPage() {
           setCredentials({
             user: result.data.user,
             accessToken: result.data.token,
+            refreshToken: result.data.refreshToken,
           }),
         );
 
