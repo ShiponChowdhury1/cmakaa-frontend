@@ -124,6 +124,10 @@ export default function OverviewPage() {
     { ...statsRow2Base[3], value: isStatsLoading ? 'Loading...' : 'Live' },
   ];
 
+  const graphs = stats?.graphs;
+  const monthlyData = (graphs?.monthlyCollections?.data ?? []) as { month: string; amount: number }[];
+  const growthData = (graphs?.userGrowthTrend ?? []) as { month: string; users: number; bankers: number; participants: number }[];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Stats Row 1 */}
@@ -143,14 +147,14 @@ export default function OverviewPage() {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <MonthlyCollectionsBarChart />
+          <MonthlyCollectionsBarChart data={monthlyData.map(d => ({ month: d.month, amount: d.amount }))} />
         </div>
         <div>
-          <PardnaStatusPieChart />
+          <PardnaStatusPieChart statusData={graphs?.pardnaStatusDistribution} />
         </div>
       </div>
 
-      <UserGrowthLineChart />
+      <UserGrowthLineChart data={growthData.map(d => ({ month: d.month, users: d.users, bankers: d.bankers, participants: d.participants }))} />
 
       {/* Top Performing Pardnas */}
       <div className="bg-white rounded-xl border border-gray-100 p-6">

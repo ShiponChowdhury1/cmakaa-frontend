@@ -2,15 +2,11 @@
 import { BarChart, Bar, XAxis, Tooltip } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
-const data = [
-  { month: 'Jan', collected: 4200 },
-  { month: 'Feb', collected: 4800 },
-  { month: 'Mar', collected: 5100 },
-  { month: 'Apr', collected: 4600 },
-  { month: 'May', collected: 5300 },
-  { month: 'Jun', collected: 4900 },
-  { month: 'Jul', collected: 5500 },
-];
+type MonthlyItem = { month: string; amount: number };
+
+interface Props {
+  data?: MonthlyItem[];
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -35,9 +31,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export default function MonthlyCollectionsBarChart() {
-  const total = data.reduce((sum, d) => sum + d.collected, 0);
-  const peak = Math.max(...data.map((d) => d.collected));
+export default function MonthlyCollectionsBarChart({ data }: Props) {
+  const series = (data ?? []).map(d => ({ month: d.month, collected: Number(d.amount ?? 0) }));
+  const total = series.reduce((sum, d) => sum + d.collected, 0);
+  const peak = series.length ? Math.max(...series.map((d) => d.collected)) : 0;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 w-full">
@@ -63,7 +60,7 @@ export default function MonthlyCollectionsBarChart() {
       <BarChart
         style={{ width: '100%', aspectRatio: 2.8 }}
         responsive
-        data={data}
+        data={series.length ? series : [{ month: '—', collected: 0 }]}
         margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
       >
         <XAxis

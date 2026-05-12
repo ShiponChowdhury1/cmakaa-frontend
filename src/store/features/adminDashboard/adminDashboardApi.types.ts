@@ -5,6 +5,36 @@ export interface AdminPlatformStats {
 	activePardnas: number;
 	pendingKyc: number;
 	totalConfirmedPayouts: number;
+  graphs?: AdminPlatformGraphs;
+}
+
+export interface AdminUserGrowthItem {
+	month: string;
+	users: number;
+	bankers: number;
+	participants: number;
+}
+
+export interface AdminMonthlyCollectionItem {
+	month: string;
+	amount: number;
+}
+
+export interface AdminMonthlyCollections {
+	data: AdminMonthlyCollectionItem[];
+	total: string;
+	peak: string;
+}
+
+export type AdminPardnaStatusDistribution = Record<
+	string,
+	{ count: number; percentage: number } | number
+> & { total?: number };
+
+export interface AdminPlatformGraphs {
+	userGrowthTrend?: AdminUserGrowthItem[];
+	monthlyCollections?: AdminMonthlyCollections;
+	pardnaStatusDistribution?: AdminPardnaStatusDistribution;
 }
 
 export interface AdminStatsResponse {

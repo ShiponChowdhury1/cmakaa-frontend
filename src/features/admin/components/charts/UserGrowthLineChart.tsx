@@ -2,15 +2,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'r
 import type { LabelProps } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
-const data = [
-  { month: 'Jan', users: 18, bankers: 2, participants: 16 },
-  { month: 'Feb', users: 22, bankers: 2, participants: 20 },
-  { month: 'Mar', users: 26, bankers: 3, participants: 23 },
-  { month: 'Apr', users: 30, bankers: 3, participants: 27 },
-  { month: 'May', users: 35, bankers: 4, participants: 31 },
-  { month: 'Jun', users: 38, bankers: 4, participants: 34 },
-  { month: 'Jul', users: 42, bankers: 4, participants: 38 },
-];
+type GrowthItem = { month: string; users: number; bankers: number; participants: number };
+
+interface Props {
+  data?: GrowthItem[];
+}
 
 const CustomizedLabel = ({ x, y, stroke, value }: LabelProps) => (
   <text x={x} y={y} dy={-6} fill={stroke as string} fontSize={10} textAnchor="middle" fontWeight={600}>
@@ -53,7 +49,14 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
   );
 };
 
-export default function UserGrowthLineChart() {
+export default function UserGrowthLineChart({ data }: Props) {
+  const series = (data ?? []).map(d => ({ month: d.month, users: Number(d.users ?? 0), bankers: Number(d.bankers ?? 0), participants: Number(d.participants ?? 0) }));
+  const totals = {
+    users: series.reduce((s, x) => s + x.users, 0),
+    bankers: series.reduce((s, x) => s + x.bankers, 0),
+    participants: series.reduce((s, x) => s + x.participants, 0),
+  };
+
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 w-full">
       <div className="flex items-start justify-between mb-5">
@@ -78,7 +81,7 @@ export default function UserGrowthLineChart() {
       <LineChart
         style={{ width: '100%', aspectRatio: 2.8 }}
         responsive
-        data={data}
+        data={series.length ? series : [{ month: '—', users: 0, bankers: 0, participants: 0 }]}
         margin={{ top: 20, right: 10, left: -10, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />

@@ -2,7 +2,13 @@ import { Pie, PieChart, Sector, Tooltip } from 'recharts';
 import type { PieLabelRenderProps, PieSectorShapeProps } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
-const data = [
+type StatusInput = Record<string, any> | undefined;
+
+interface Props {
+  statusData?: StatusInput;
+}
+
+const defaultData = [
   { name: 'Active Pardnas', value: 12 },
   { name: 'Completed', value: 8 },
   { name: 'Paused', value: 3 },
@@ -10,6 +16,12 @@ const data = [
 ];
 
 const COLORS = ['url(#active-pardna-grad)', '#10B981', '#3B82F6', '#EF4444'];
+const STATUS_COLOR_MAP: Record<string, string> = {
+  'Active Pardnas': 'linear-gradient(90deg, #E57432 0%, #FF9C65 100%)',
+  Completed: '#10B981',
+  Paused: '#3B82F6',
+  Cancelled: '#EF4444',
+};
 const RADIAN = Math.PI / 180;
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelRenderProps) => {
@@ -41,7 +53,6 @@ const getIndicatorStyle = (index: number) => {
 const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) => {
   if (!active || !payload?.length) return null;
   const item = payload[0];
-  const index = data.findIndex((d) => d.name === item.name);
   return (
     <div style={{
       backgroundColor: '#fff',
@@ -58,9 +69,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<
             height: 10,
             borderRadius: '50%',
             display: 'inline-block',
-            ...(index === 0
-              ? { background: 'linear-gradient(90deg, #E57432 0%, #FF9C65 100%)' }
-              : { backgroundColor: COLORS[index] ?? '#10B981' }),
+            background: STATUS_COLOR_MAP[item.name] ?? '#10B981',
           }}
         />
         <span style={{ color: '#111827', fontWeight: 600 }}>{item.name}</span>
@@ -70,9 +79,22 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<
   );
 };
 
-const total = data.reduce((s, d) => s + d.value, 0);
+const buildData = (status?: StatusInput) => {
+  if (!status) return defaultData;
+  const mapping: Record<string, string> = {
+    ACTIVE: 'Active Pardnas',
+    COMPLETED: 'Completed',
+    PAUSED: 'Paused',
+    CANCELLED: 'Cancelled',
+  };
+  const entries = Object.keys(status).filter(k => k !== 'total');
+  const arr = entries.map((k) => ({ name: mapping[k] ?? k, value: status[k]?.count ?? 0 }));
+  return arr.length ? arr : defaultData;
+};
 
-export default function PardnaStatusPieChart() {
+export default function PardnaStatusPieChart({ statusData }: Props) {
+  const data = buildData(statusData);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 w-full">
       {/* Header */}
