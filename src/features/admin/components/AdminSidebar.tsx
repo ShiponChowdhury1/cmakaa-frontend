@@ -18,15 +18,6 @@ const navItems = [
     ),
   },
   {
-    label: 'Analytics',
-    path: '/admin/analytics',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M18 20V10M12 20V4M6 20v-6" />
-      </svg>
-    ),
-  },
-  {
     label: 'All Pardnas',
     path: '/admin/pardnas',
     icon: (

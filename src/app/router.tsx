@@ -18,7 +18,6 @@ import NewPasswordPage from '@/features/auth/NewPasswordPage';
 // Admin
 import AdminLayout from '@/features/admin/AdminLayout';
 import OverviewPage     from '@/features/admin/pages/overview';
-import AnalyticsPage    from '@/features/admin/pages/analytics';
 import AllPardnasPage   from '@/features/admin/pages/pardnas';
 import BankersPage      from '@/features/admin/pages/bankers';
 import ParticipantsPage from '@/features/admin/pages/participants';
@@ -93,10 +92,6 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <OverviewPage />,
-      },
-      {
-        path: 'analytics',
-        element: <AnalyticsPage />,
       },
       {
         path: 'pardnas',

@@ -1,7 +1,9 @@
 import StatsCard from '../../components/StatsCard';
 import ActivityItem from '../../components/ActivityItem';
-import Badge from '@/components/ui/Badge';
 import { useGetAdminPlatformStatsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
+import PardnaStatusPieChart from '../../components/charts/PardnaStatusPieChart';
+import MonthlyCollectionsBarChart from '../../components/charts/MonthlyCollectionsBarChart';
+import UserGrowthLineChart from '../../components/charts/UserGrowthLineChart';
 
 const statsRow1Base = [
   {
@@ -90,14 +92,6 @@ const statsRow2Base = [
   },
 ];
 
-
-
-const pardnasAttention = [
-  { name: 'Family Monthly', banker: 'Sarah J.', overdue: 1 },
-  { name: 'Community Build', banker: 'Donna R.', overdue: 2 },
-  { name: 'Youth Club Savings', banker: 'James K.', overdue: 3 },
-];
-
 const recentActivity = [
   { type: 'payment' as const, title: 'Sarah J. Recorded payment', description: 'Family Monthly → Grace M.', time: '04:12' },
   { type: 'status' as const, title: 'System. Marked payment overdue', description: 'Community Build → Participant #4', time: '03:45' },
@@ -105,15 +99,16 @@ const recentActivity = [
   { type: 'recycle' as const, title: 'Mike T. Completed cycle', description: 'Summer Holiday Fund', time: '10:00' },
 ];
 
-export default function OverviewPage() {
-  const { data: response, isLoading: isStatsLoading, error } = useGetAdminPlatformStatsQuery();
-  const stats = response?.data ?? null;
+const topPerformingPardnas = [
+  { name: 'Family Monthly', score: 98, amount: '£12,400' },
+  { name: 'Community Build', score: 92, amount: '£8,200' },
+  { name: 'Youth Club Savings', score: 88, amount: '£6,800' },
+  { name: 'Summer Holiday Fund', score: 85, amount: '£5,100' },
+];
 
-  /* Debug — remove after verifying */
-  console.log('[OverviewPage] API response:', response);
-  console.log('[OverviewPage] Stats data:', stats);
-  console.log('[OverviewPage] Loading:', isStatsLoading);
-  if (error) console.error('[OverviewPage] API error:', error);
+export default function OverviewPage() {
+  const { data: response, isLoading: isStatsLoading } = useGetAdminPlatformStatsQuery();
+  const stats = response?.data ?? null;
 
   const statsRow1 = [
     { ...statsRow1Base[0], value: stats?.totalBankers ?? 0 },
@@ -144,33 +139,38 @@ export default function OverviewPage() {
           <StatsCard key={stat.label} {...stat} />
         ))}
       </div>
-      
 
-      {/* Pardnas Needing Attention */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4M12 16h.01" />
-            </svg>
-          </div>
-          <h3 className="text-sm font-semibold text-[var(--color-dark)]">Pardnas Needing Attention</h3>
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <MonthlyCollectionsBarChart />
         </div>
+        <div>
+          <PardnaStatusPieChart />
+        </div>
+      </div>
 
-        <div className="space-y-0">
-          {pardnasAttention.map((p) => (
-            <div
-              key={p.name}
-              className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0"
-            >
-              <div>
-                <p className="text-sm font-medium text-[var(--color-dark)]">{p.name}</p>
-                <p className="text-xs text-[var(--color-gray-400)]">by {p.banker}</p>
+      <UserGrowthLineChart />
+
+      {/* Top Performing Pardnas */}
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <h3 className="text-sm font-semibold text-[var(--color-dark)] mb-4">Top Performing Pardnas</h3>
+        <div className="space-y-3">
+          {topPerformingPardnas.map((p) => (
+            <div key={p.name} className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                <span className="text-sm font-medium text-[var(--color-dark)]">{p.name}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-32">
+                  <div
+                    className="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] rounded-full transition-all"
+                    style={{ width: `${p.score}%` }}
+                  />
+                </div>
               </div>
-              <Badge variant="error" size="sm">
-                {p.overdue} overdue
-              </Badge>
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-medium text-[var(--color-primary)]">{p.score}%</span>
+                <span className="text-sm font-semibold text-[var(--color-dark)]">{p.amount}</span>
+              </div>
             </div>
           ))}
         </div>
