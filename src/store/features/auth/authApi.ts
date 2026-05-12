@@ -1,77 +1,17 @@
 import { baseApi } from '../../api/baseApi';
-import type { AuthUser } from './authSlice';
-
-/* ── Request Types ── */
-
-interface SignupBankerRequest {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-}
-
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface VerifyOtpRequest {
-  email: string;
-  otp: string;
-  flow: 'register' | 'forgot-password';
-}
-
-interface ForgotPasswordRequest {
-  email: string;
-}
-
-interface ResetPasswordRequest {
-  token: string;
-  newPassword: string;
-}
-
-interface ResendOtpRequest {
-  email: string;
-}
-
-/* ── Response Types ── */
-
-/** Generic API response wrapper */
-interface ApiResponse<T = null> {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  data: T;
-}
-
-/** Login response — token + refreshToken + user */
-interface LoginResponseData {
-  token: string;
-  refreshToken: string;
-  user: AuthUser;
-}
-
-/** Forgot password response */
-interface ForgotPasswordResponseData {
-  email: string;
-  status: string;
-}
-
-/** OTP verify response — forgot-password flow returns a reset token */
-interface VerifyOtpResponseData {
-  token?: string;
-}
-
-/** Refresh response — returns new token + refreshToken + user */
-interface RefreshResponseData {
-  token: string;
-  refreshToken: string;
-  user: AuthUser;
-}
-
-/* ── Auth API ── */
+import type {
+  SignupBankerRequest,
+  LoginRequest,
+  VerifyOtpRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ResendOtpRequest,
+  ApiResponse,
+  LoginResponseData,
+  ForgotPasswordResponseData,
+  VerifyOtpResponseData,
+  RefreshResponseData,
+} from './authApi.types';
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({

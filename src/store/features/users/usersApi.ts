@@ -1,38 +1,10 @@
 import { baseApi } from '../../api/baseApi';
-
-/* ── Types ── */
-
-interface User {
-  id: string;
-  name: string;
-  phone: string;
-  role: 'admin' | 'banker' | 'participant';
-  avatar?: string;
-  kycStatus?: string;
-  createdAt?: string;
-}
-
-interface UsersResponse {
-  success: boolean;
-  data: User[];
-  total?: number;
-  page?: number;
-  limit?: number;
-}
-
-interface SingleUserResponse {
-  success: boolean;
-  data: User;
-}
-
-interface UsersQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: string;
-}
-
-/* ── Users API (Admin) ── */
+import type {
+  User,
+  UsersResponse,
+  SingleUserResponse,
+  UsersQueryParams,
+} from './usersApi.types';
 
 export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
