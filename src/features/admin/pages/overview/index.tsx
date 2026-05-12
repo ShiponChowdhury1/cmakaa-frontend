@@ -1,11 +1,11 @@
 import StatsCard from '../../components/StatsCard';
 import ActivityItem from '../../components/ActivityItem';
 import Badge from '@/components/ui/Badge';
+import { useGetAdminPlatformStatsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
 
-const statsRow1 = [
+const statsRow1Base = [
   {
     label: 'Total Bankers',
-    value: '4',
     iconBg: 'bg-orange-50',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2">
@@ -16,7 +16,6 @@ const statsRow1 = [
   },
   {
     label: 'Total Participants',
-    value: '38',
     iconBg: 'bg-emerald-50',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
@@ -27,7 +26,6 @@ const statsRow1 = [
   },
   {
     label: 'Active Pardnas',
-    value: '12',
     iconBg: 'bg-blue-50',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2">
@@ -37,8 +35,7 @@ const statsRow1 = [
     ),
   },
   {
-    label: 'Completed',
-    value: '8',
+    label: 'Total Pardnas',
     iconBg: 'bg-purple-50',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2">
@@ -49,12 +46,10 @@ const statsRow1 = [
   },
 ];
 
-const statsRow2 = [
+const statsRow2Base = [
   {
-    label: 'Overdue Rate',
-    value: '6.4%',
+    label: 'Pending KYC',
     iconBg: 'bg-red-50',
-    trend: { direction: 'down' as const, color: 'text-red-500' },
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
         <path d="M23 6l-9.5 9.5-5-5L1 18" />
@@ -63,8 +58,7 @@ const statsRow2 = [
     ),
   },
   {
-    label: 'Avg Trust Score',
-    value: '87',
+    label: 'Confirmed Payouts',
     iconBg: 'bg-gray-100',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
@@ -74,10 +68,8 @@ const statsRow2 = [
     ),
   },
   {
-    label: 'Total Collected',
-    value: '£34,200',
+    label: 'Total Users',
     iconBg: 'bg-amber-50',
-    trend: { direction: 'up' as const, color: 'text-green-500' },
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2">
         <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
@@ -85,8 +77,8 @@ const statsRow2 = [
     ),
   },
   {
-    label: 'Total Users',
-    value: '42',
+    label: 'Status',
+    value: 'Live',
     iconBg: 'bg-indigo-50',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2">
@@ -114,6 +106,29 @@ const recentActivity = [
 ];
 
 export default function OverviewPage() {
+  const { data: response, isLoading: isStatsLoading, error } = useGetAdminPlatformStatsQuery();
+  const stats = response?.data ?? null;
+
+  /* Debug — remove after verifying */
+  console.log('[OverviewPage] API response:', response);
+  console.log('[OverviewPage] Stats data:', stats);
+  console.log('[OverviewPage] Loading:', isStatsLoading);
+  if (error) console.error('[OverviewPage] API error:', error);
+
+  const statsRow1 = [
+    { ...statsRow1Base[0], value: stats?.totalBankers ?? 0 },
+    { ...statsRow1Base[1], value: stats?.totalParticipants ?? 0 },
+    { ...statsRow1Base[2], value: stats?.activePardnas ?? 0 },
+    { ...statsRow1Base[3], value: stats?.totalPardnas ?? 0 },
+  ];
+
+  const statsRow2 = [
+    { ...statsRow2Base[0], value: stats?.pendingKyc ?? 0 },
+    { ...statsRow2Base[1], value: stats?.totalConfirmedPayouts ?? 0 },
+    { ...statsRow2Base[2], value: (stats?.totalBankers ?? 0) + (stats?.totalParticipants ?? 0) },
+    { ...statsRow2Base[3], value: isStatsLoading ? 'Loading...' : 'Live' },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Stats Row 1 */}
