@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Bell, Eye, EyeOff, Globe, Lock, User } from 'lucide-react';
-import { useMeQuery } from '@/store/features/auth/authApi';
+import { useMeQuery, useUpdateProfileMutation, useChangePasswordMutation } from '@/store/features/auth/authApi';
+import { toast } from 'react-toastify';
 
 const gradientStyle = {
   background: 'linear-gradient(90deg, #E57432 0%, #FF9C65 100%)',
@@ -97,25 +98,35 @@ function SettingRow({ label, description, children }: SettingRowProps) {
 interface InputFieldProps {
   label: string;
   type?: string;
-  defaultValue?: string;
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-function InputField({ label, type = 'text', defaultValue, placeholder }: InputFieldProps) {
+function InputField({ label, type = 'text', value, onChange, placeholder, disabled = false }: InputFieldProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-semibold text-[#E57432] uppercase tracking-wider">{label}</label>
       <input
         type={type}
-        defaultValue={defaultValue}
+        value={value}
+        onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2.5 rounded-lg text-sm text-gray-800 focus:outline-none bg-[#FFF8F2]"
+        disabled={disabled}
+        className={`w-full px-3 py-2.5 rounded-lg text-sm text-gray-800 focus:outline-none bg-[#FFF8F2] ${
+          disabled ? 'cursor-not-allowed opacity-70' : ''
+        }`}
         style={{
           border: '1.5px solid #FFD2B1',
           transition: 'border-color 0.2s',
         }}
-        onFocus={e => (e.target.style.borderColor = '#E57432')}
-        onBlur={e => (e.target.style.borderColor = '#E8E8E8')}
+        onFocus={e => {
+          if (!disabled) e.target.style.borderColor = '#E57432';
+        }}
+        onBlur={e => {
+          if (!disabled) e.target.style.borderColor = '#E8E8E8';
+        }}
       />
     </div>
   );
@@ -125,17 +136,21 @@ interface PasswordFieldProps {
   label: string;
   value: string;
   showPassword: boolean;
+  onChange: (value: string) => void;
   onToggleShowPassword: () => void;
+  placeholder?: string;
 }
 
-function PasswordField({ label, value, showPassword, onToggleShowPassword }: PasswordFieldProps) {
+function PasswordField({ label, value, showPassword, onChange, onToggleShowPassword, placeholder }: PasswordFieldProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-semibold text-[#E57432] uppercase tracking-wider">{label}</label>
       <div className="relative">
         <input
           type={showPassword ? 'text' : 'password'}
-          defaultValue={value}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
           className="w-full px-3 py-2.5 pr-11 rounded-lg text-sm text-gray-800 focus:outline-none bg-[#FFF8F2]"
           style={{
             border: '1.5px solid #FFD2B1',
@@ -179,33 +194,47 @@ function GradientButton({ children, onClick, className = '' }: GradientButtonPro
 
 export default function SettingsPage() {
   const { data: profileResponse, isLoading, isError } = useMeQuery();
+  const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
   const [emailNotif, setEmailNotif] = useState(true);
   const [kycAlerts, setKycAlerts] = useState(true);
   const [exceptionAlerts, setExceptionAlerts] = useState(true);
   const [systemAlerts, setSystemAlerts] = useState(true);
   const [dualApproval, setDualApproval] = useState(false);
   const [autoProofPacks, setAutoProofPacks] = useState(true);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
+  const [lastName, setLastName] = useState<string | undefined>(undefined);
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>(undefined);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const profile = profileResponse?.data;
 
   useEffect(() => {
     return () => {
-      if (profilePhoto?.startsWith('blob:')) {
-        URL.revokeObjectURL(profilePhoto);
+      if (profilePhotoPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePhotoPreview);
       }
     };
-  }, [profilePhoto]);
+  }, [profilePhotoPreview]);
 
   const handleProfilePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const nextPhoto = URL.createObjectURL(file);
-    setProfilePhoto((current) => {
+    setProfilePhotoFile(file);
+    setProfilePhotoPreview((current) => {
       if (current?.startsWith('blob:')) {
         URL.revokeObjectURL(current);
       }
@@ -213,10 +242,106 @@ export default function SettingsPage() {
     });
   };
 
+  const resolvedFirstName = firstName ?? profile?.firstName ?? '';
+  const resolvedLastName = lastName ?? profile?.lastName ?? '';
+  const resolvedPhoneNumber = phoneNumber ?? profile?.phoneNumber ?? '';
+
+  const handleSaveProfile = async () => {
+    setSaveMessage(null);
+    setSaveError(null);
+
+    try {
+      await updateProfile({
+        data: {
+          firstName: resolvedFirstName.trim(),
+          lastName: resolvedLastName.trim(),
+          phoneNumber: resolvedPhoneNumber.trim(),
+        },
+        profilePicture: profilePhotoFile,
+      }).unwrap();
+
+      setSaveMessage('Profile updated successfully.');
+      setProfilePhotoFile(null);
+      setFirstName(undefined);
+      setLastName(undefined);
+      setPhoneNumber(undefined);
+      toast.success('Profile updated successfully.');
+
+      if (profilePhotoPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePhotoPreview);
+        setProfilePhotoPreview(null);
+      }
+    } catch (error: unknown) {
+      let message = 'Failed to update profile.';
+      if (error && typeof error === 'object' && 'data' in error) {
+        const errData = (error as { data: { message?: string } }).data;
+        if (errData?.message) {
+          message = errData.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      setSaveError(message);
+      toast.error(message);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordMessage(null);
+    setPasswordError(null);
+
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      setPasswordError('Current password and new password are required.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+
+    try {
+      const response = await changePassword({
+        currentPassword: currentPassword.trim(),
+        newPassword: newPassword.trim(),
+      }).unwrap();
+
+      // Verify the backend actually confirmed success
+      if (!response.success) {
+        const msg = response.message || 'Failed to change password.';
+        setPasswordError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      setPasswordMessage('Password changed successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      toast.success('Password changed successfully.');
+    } catch (error: unknown) {
+      // RTK Query errors from .unwrap() are { status, data } objects, NOT Error instances
+      let message = 'Failed to change password.';
+      if (error && typeof error === 'object' && 'data' in error) {
+        const errData = (error as { data: { message?: string } }).data;
+        if (errData?.message) {
+          message = errData.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      setPasswordError(message);
+      toast.error(message);
+    }
+  };
+
   const displayName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : 'Admin User';
   const displayEmail = profile?.email ?? 'No email available';
   const displayPhone = profile?.phoneNumber ?? 'No phone number available';
-  const avatarSrc = profilePhoto ?? profile?.profilePicture ?? null;
+  const avatarSrc = profilePhotoPreview ?? profile?.profilePicture ?? null;
   const profileInitials = profile
     ? `${profile.firstName?.[0] || ''}${profile.lastName?.[0] || ''}`.toUpperCase()
     : 'AU';
@@ -298,8 +423,12 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 flex-1">
-                  <InputField label="Full Name" defaultValue={displayName} />
-                  <InputField label="Email Address" type="email" defaultValue={displayEmail} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InputField label="First Name" value={resolvedFirstName} onChange={value => setFirstName(value)} />
+                    <InputField label="Last Name" value={resolvedLastName} onChange={value => setLastName(value)} />
+                  </div>
+                  <InputField label="Phone Number" value={resolvedPhoneNumber} onChange={value => setPhoneNumber(value)} />
+                  <InputField label="Email Address" type="email" value={displayEmail} onChange={() => undefined} disabled />
                 </div>
               </div>
 
@@ -326,7 +455,13 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <GradientButton className="self-end">Save Changes</GradientButton>
+              <div className="mt-auto flex flex-col items-end gap-3">
+                {saveMessage && <p className="text-xs font-medium text-green-600">{saveMessage}</p>}
+                {saveError && <p className="text-xs font-medium text-red-600">{saveError}</p>}
+                <GradientButton className="self-end" onClick={handleSaveProfile}>
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </GradientButton>
+              </div>
             </div>
           </Card>
 
@@ -337,29 +472,38 @@ export default function SettingsPage() {
               <div className="space-y-4 mb-5">
                 <PasswordField
                   label="Current Password"
-                  value="password123"
-                
+                  value={currentPassword}
+                  onChange={setCurrentPassword}
                   showPassword={showCurrentPassword}
                   onToggleShowPassword={() => setShowCurrentPassword((value) => !value)}
+                  placeholder="Enter current password"
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <PasswordField
                     label="New Password"
-                    value=""
-                 
+                    value={newPassword}
+                    onChange={setNewPassword}
                     showPassword={showNewPassword}
                     onToggleShowPassword={() => setShowNewPassword((value) => !value)}
+                    placeholder="Enter new password"
                   />
                   <PasswordField
                     label="Confirm New Password"
-                    value=""
-                  
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
                     showPassword={showConfirmPassword}
                     onToggleShowPassword={() => setShowConfirmPassword((value) => !value)}
+                    placeholder="Confirm new password"
                   />
                 </div>
               </div>
-              <GradientButton className="self-start">Update Password</GradientButton>
+              <div className="mt-auto flex flex-col items-start gap-3">
+                {passwordMessage && <p className="text-xs font-medium text-green-600">{passwordMessage}</p>}
+                {passwordError && <p className="text-xs font-medium text-red-600">{passwordError}</p>}
+                <GradientButton className="self-start" onClick={handleChangePassword}>
+                  {isChangingPassword ? 'Updating...' : 'Update Password'}
+                </GradientButton>
+              </div>
             </div>
           </Card>
         </div>
