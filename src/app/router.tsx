@@ -15,6 +15,10 @@ import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage';
 import CheckInboxPage from '@/features/auth/CheckInboxPage';
 import NewPasswordPage from '@/features/auth/NewPasswordPage';
 
+// Guards
+import RequireAuth from '@/components/guards/RequireAuth';
+import RequireAdmin from '@/components/guards/RequireAdmin';
+
 // Admin
 import AdminLayout from '@/features/admin/AdminLayout';
 import OverviewPage     from '@/features/admin/pages/overview';
@@ -84,10 +88,14 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Admin Dashboard
+  // Admin Dashboard — requires ADMIN role
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <RequireAdmin>
+        <AdminLayout />
+      </RequireAdmin>
+    ),
     children: [
       {
         index: true,
@@ -120,10 +128,14 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // User Dashboard
+  // User Dashboard — requires authentication
   {
     path: '/dashboard',
-    element: <DashboardLayout />,
+    element: (
+      <RequireAuth>
+        <DashboardLayout />
+      </RequireAuth>
+    ),
     children: [
       {
         index: true,
@@ -168,3 +180,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+

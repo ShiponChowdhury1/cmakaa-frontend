@@ -4,6 +4,8 @@ import { LogOut, User } from 'lucide-react';
 import navbarLogo from '@/assets/logos/navbarLogo.svg';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { logout } from '@/store/features/auth/authSlice';
+import { useServerLogoutMutation } from '@/store/features/auth/authApi';
+import { baseApi } from '@/store/api/baseApi';
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -11,6 +13,7 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [serverLogout] = useServerLogoutMutation();
 
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
 
@@ -25,10 +28,16 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
     setDropdownOpen(false);
     setMobileOpen(false);
+    try {
+      await serverLogout().unwrap();
+    } catch {
+      // Even if server logout fails, clear local state
+    }
+    dispatch(logout());
+    dispatch(baseApi.util.resetApiState());
     navigate('/auth/login', { replace: true });
   };
 

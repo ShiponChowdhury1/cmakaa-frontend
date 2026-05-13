@@ -1,4 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { Camera, Eye, EyeOff, Pencil, X } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { logout, setUser } from '@/store/features/auth/authSlice';
+import { useServerLogoutMutation, useChangePasswordMutation, useUpdateProfileMutation } from '@/store/features/auth/authApi';
+import { baseApi } from '@/store/api/baseApi';
+import { toast } from 'react-toastify';
 
 const toggleStyle = `
   .toggle-label { position: relative; display: inline-block; width: 51px; height: 31px; cursor: pointer; flex-shrink: 0; }
@@ -25,27 +32,150 @@ function Toggle({ defaultChecked }: ToggleProps) {
 }
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const [serverLogoutMutation] = useServerLogoutMutation();
+  const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const [profileForm, setProfileForm] = useState({
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
+    phoneNumber: user?.phoneNumber ?? '',
+  });
+  const [profileSaveMessage, setProfileSaveMessage] = useState<string | null>(null);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
   const [passwordForm, setPasswordForm] = useState({
     current: '',
     new: '',
     confirm: ''
   });
 
-  const handleLogout = () => {
-    // Add actual logout logic here
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    try {
+      await serverLogoutMutation().unwrap();
+    } catch {
+      // Even if server logout fails, clear local state
+    }
+    dispatch(logout());
+    dispatch(baseApi.util.resetApiState());
+    navigate('/auth/login', { replace: true });
   };
 
-  const handlePasswordChange = () => {
+  const handleEditProfileClick = () => {
+    setProfileSaveMessage(null);
+    setProfileSaveError(null);
+    setProfileForm({
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      phoneNumber: user?.phoneNumber ?? '',
+    });
+    setProfilePictureFile(null);
+    setProfilePicturePreview(null);
+    setIsEditingProfile(true);
+  };
+
+  const handleCancelProfileEdit = () => {
+    setIsEditingProfile(false);
+    setProfileSaveMessage(null);
+    setProfileSaveError(null);
+    setProfilePictureFile(null);
+    setProfilePicturePreview(null);
+    setProfileForm({
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      phoneNumber: user?.phoneNumber ?? '',
+    });
+  };
+
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) return;
+
+    setProfilePictureFile(file);
+    setProfilePicturePreview(URL.createObjectURL(file));
+  };
+
+  const handleProfileSave = async () => {
+    setProfileSaveMessage(null);
+    setProfileSaveError(null);
+
+    try {
+      const result = await updateProfile({
+        data: {
+          firstName: profileForm.firstName.trim(),
+          lastName: profileForm.lastName.trim(),
+          phoneNumber: profileForm.phoneNumber.trim(),
+        },
+        profilePicture: profilePictureFile,
+      }).unwrap();
+
+      if (result.success && result.data) {
+        dispatch(setUser(result.data));
+      } else if (result.success && user) {
+        dispatch(setUser({
+          ...user,
+          firstName: profileForm.firstName.trim(),
+          lastName: profileForm.lastName.trim(),
+          phoneNumber: profileForm.phoneNumber.trim(),
+        }));
+      }
+
+      setProfileSaveMessage(result.message || 'Profile updated successfully');
+      toast.success(result.message || 'Profile updated successfully');
+      setIsEditingProfile(false);
+      setProfilePictureFile(null);
+      setProfilePicturePreview(null);
+    } catch (error: unknown) {
+      const apiError = error as { data?: { message?: string }; message?: string };
+      const errorMsg = apiError?.data?.message || apiError?.message || 'Failed to update profile';
+      setProfileSaveError(errorMsg);
+      toast.error(errorMsg);
+    }
+  };
+
+  const handlePasswordChange = async () => {
     if (passwordForm.new !== passwordForm.confirm) {
-      alert("New passwords don't match");
+      toast.error("New passwords don't match");
       return;
     }
-    console.log("Password changed");
-    setShowChangePasswordModal(false);
+    
+    try {
+      const result = await changePassword({
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.new,
+      }).unwrap();
+      
+      if (result.success) {
+        toast.success(result.message || 'Password changed successfully');
+        setShowChangePasswordModal(false);
+        setPasswordForm({ current: '', new: '', confirm: '' });
+      } else {
+        toast.error(result.message || 'Failed to change password');
+      }
+    } catch (error: unknown) {
+      const apiError = error as { data?: { message?: string }; message?: string };
+      const errorMsg = apiError?.data?.message || apiError?.message || 'Failed to change password';
+      toast.error(errorMsg);
+    }
   };
+
+  const passwordInputClass =
+    'w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 pr-12 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400';
+
+  const profileAvatarSrc = profilePicturePreview ?? user?.profilePicture ?? null;
+  const profileInitials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'U';
 
   return (
     <>
@@ -57,35 +187,49 @@ export default function ProfilePage() {
             {/* PROFILE CARD */}
             <div className="bg-white rounded-2xl p-6 w-full shadow-sm">
             {/* Title */}
-            <div className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-              </svg>
-              Profile
+            <div className="flex items-center justify-between gap-3 text-xl font-bold text-gray-900 mb-6">
+              <div className="flex items-center gap-2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+                Profile
+              </div>
+              <button
+                type="button"
+                onClick={handleEditProfileClick}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                <Pencil size={16} />
+                Edit Profile
+              </button>
             </div>
 
             {/* Avatar Row */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-gray-900 flex items-center justify-center text-white text-lg font-bold shrink-0">
-                MJ
+              <div className="w-16 h-16 rounded-full bg-gray-900 flex items-center justify-center text-white text-lg font-bold shrink-0 overflow-hidden">
+                {user?.profilePicture ? (
+                  <img src={user.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'U'
+                )}
               </div>
               <div>
-                <div className="text-base font-bold text-gray-900">Marcus Johnson</div>
-                <div className="text-sm font-medium mt-0.5" style={{ color: "#E05A1E" }}>marcus_j@PardnaBook</div>
+                <div className="text-base font-bold text-gray-900">{user?.firstName} {user?.lastName}</div>
+                <div className="text-sm font-medium mt-0.5" style={{ color: "#E05A1E" }}>{user?.username ? `@${user.username}` : ''}</div>
               </div>
             </div>
 
             {/* Full Name */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-500 mb-1.5">Full Name</label>
-              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">Marcus Johnson</div>
+              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">{user?.firstName} {user?.lastName}</div>
             </div>
 
             {/* Username */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-500 mb-1.5">Username</label>
               <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900 flex justify-between items-center">
-                <span>marcus_j</span>
+                <span>{user?.username || 'N/A'}</span>
                 <span className="text-gray-400 text-sm">@PardnaBook</span>
               </div>
             </div>
@@ -93,14 +237,15 @@ export default function ProfilePage() {
             {/* Phone */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-500 mb-1.5">Phone Number</label>
-              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">+44 7700 900000</div>
+              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">{user?.phoneNumber || 'N/A'}</div>
             </div>
 
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-1.5">Email</label>
-              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">marcus@example.com</div>
+              <div className="w-full bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-900">{user?.email || 'N/A'}</div>
             </div>
+
           </div>
 
           {/* NOTIFICATION CARD */}
@@ -233,19 +378,128 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* EDIT PROFILE MODAL */}
+        {isEditingProfile && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={handleCancelProfileEdit}
+          >
+            <div
+              className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-50 text-[#E05A1E]">
+                    <Pencil size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
+                    <p className="text-sm text-gray-500">Update your profile details and photo.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCancelProfileEdit}
+                  className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Close edit profile modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-16 h-16 rounded-full bg-gray-900 flex items-center justify-center text-white text-lg font-bold shrink-0 overflow-hidden">
+                  {profileAvatarSrc ? (
+                    <img src={profileAvatarSrc} alt="Profile preview" className="w-full h-full object-cover" />
+                  ) : (
+                    profileInitials
+                  )}
+                </div>
+                <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer border-none" style={{ background: '#E05A1E' }}>
+                  <Camera size={16} />
+                  Change photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfilePictureChange}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">First Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.firstName}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, firstName: e.target.value }))}
+                    className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
+                    placeholder="First name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Last Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.lastName}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, lastName: e.target.value }))}
+                    className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Phone Number</label>
+                <input
+                  type="text"
+                  value={profileForm.phoneNumber}
+                  onChange={(e) => setProfileForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
+                  className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
+                  placeholder="Phone number"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 mb-5">
+                {profileSaveMessage && <p className="text-xs font-medium text-green-600">{profileSaveMessage}</p>}
+                {profileSaveError && <p className="text-xs font-medium text-red-600">{profileSaveError}</p>}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={handleProfileSave}
+                  disabled={isUpdatingProfile}
+                  className="w-full sm:w-auto px-6 py-3 rounded-lg text-white text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50 border-none"
+                  style={{ background: '#E05A1E' }}
+                >
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelProfileEdit}
+                  className="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300 text-gray-900 text-sm font-semibold cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CHANGE PASSWORD MODAL */}
         {showChangePasswordModal && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-lg">
+            <div className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-lg">
               {/* Close button */}
               <button
                 onClick={() => setShowChangePasswordModal(false)}
-                className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+                className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+                aria-label="Close change password modal"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
+                <X size={20} />
               </button>
 
               {/* Title */}
@@ -260,46 +514,83 @@ export default function ProfilePage() {
               {/* Current Password */}
               <div className="mb-4">
                 <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Current Password</label>
-                <input
-                  type="password"
-                  placeholder="password123"
-                  value={passwordForm.current}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
-                  className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
-                />
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? 'text' : 'password'}
+                    placeholder="password123"
+                    value={passwordForm.current}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                    className={passwordInputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-none bg-transparent p-1"
+                    aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                    aria-pressed={showPasswords.current}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               {/* New Password and Confirm Row */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">New Password</label>
-                  <input
-                    type="password"
-                    placeholder="newpassword"
-                    value={passwordForm.new}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
-                    className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPasswords.new ? 'text' : 'password'}
+                      placeholder="newpassword"
+                      value={passwordForm.new}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
+                      className={passwordInputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords((prev) => ({ ...prev, new: !prev.new }))}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-none bg-transparent p-1"
+                      aria-label={showPasswords.new ? 'Hide new password' : 'Show new password'}
+                      aria-pressed={showPasswords.new}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Confirm Password</label>
-                  <input
-                    type="password"
-                    placeholder="newpassword"
-                    value={passwordForm.confirm}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                    className="w-full bg-gray-100 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-400"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      placeholder="newpassword"
+                      value={passwordForm.confirm}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                      className={passwordInputClass}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer border-none bg-transparent p-1"
+                      aria-label={showPasswords.confirm ? 'Hide confirm password' : 'Show confirm password'}
+                      aria-pressed={showPasswords.confirm}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Update Button */}
               <button
                 onClick={handlePasswordChange}
-                className="w-full py-3 rounded-lg text-white font-semibold cursor-pointer transition-opacity hover:opacity-90"
+                disabled={isChangingPassword}
+                className="w-full py-3 rounded-lg text-white font-semibold cursor-pointer transition-opacity hover:opacity-90 disabled:opacity-50"
                 style={{ background: "#E05A1E" }}
               >
-                Update Password
+                {isChangingPassword ? 'Updating...' : 'Update Password'}
               </button>
             </div>
           </div>

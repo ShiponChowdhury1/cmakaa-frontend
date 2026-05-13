@@ -3,6 +3,10 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import navbarLogo from '@/assets/logos/navbarLogo.svg';
+import { useAppDispatch } from '@/store';
+import { logout } from '@/store/features/auth/authSlice';
+import { useServerLogoutMutation } from '@/store/features/auth/authApi';
+import { baseApi } from '@/store/api/baseApi';
 
 const navItems = [
   {
@@ -90,7 +94,21 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [serverLogout] = useServerLogoutMutation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    try {
+      await serverLogout().unwrap();
+    } catch {
+      // Even if server logout fails, clear local state
+    }
+    dispatch(logout());
+    dispatch(baseApi.util.resetApiState());
+    navigate('/auth/login', { replace: true });
+  };
 
   return (
     <>
@@ -239,7 +257,7 @@ export default function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps)
               Cancel
             </button>
             <button
-              onClick={() => { setShowLogoutModal(false); navigate('/'); }}
+              onClick={handleLogout}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 active:scale-95 transition-all cursor-pointer border-none outline-none shadow-md"
             >
               Logout

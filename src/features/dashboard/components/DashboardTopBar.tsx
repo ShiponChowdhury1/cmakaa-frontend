@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/utils/cn';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { logout } from '@/store/features/auth/authSlice';
+import { useServerLogoutMutation } from '@/store/features/auth/authApi';
+import { baseApi } from '@/store/api/baseApi';
 
 const tabs = [
   { label: 'Home',          path: '/dashboard' },
@@ -13,7 +17,30 @@ const tabs = [
 
 export default function DashboardTopBar() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((s) => s.auth);
+  const [serverLogout] = useServerLogoutMutation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutModal(false);
+    try {
+      await serverLogout().unwrap();
+    } catch {
+      // Even if server logout fails, clear local state
+    }
+    dispatch(logout());
+    dispatch(baseApi.util.resetApiState());
+    navigate('/auth/login', { replace: true });
+  };
+
+  const displayName = user
+    ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+    : 'User';
+  const displayEmail = user?.email || '';
+  const initials = user
+    ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
+    : 'U';
 
   return (
     <>
@@ -26,15 +53,21 @@ export default function DashboardTopBar() {
           <div className="flex items-center justify-between px-5 py-4 sm:px-6">
             <Link to="/home" className="flex items-center gap-3 no-underline group" title="Go to Home page">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shrink-0 ring-2 ring-transparent transition-all group-hover:ring-[var(--color-primary)]/30">
-                <img
-                  src="https://i.pravatar.cc/48?img=68"
-                  alt="John Doe"
-                  className="w-full h-full object-cover"
-                />
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-light)] flex items-center justify-center text-white text-sm font-bold">
+                    {initials}
+                  </div>
+                )}
               </div>
               <div>
-                <p className="text-sm font-bold text-[var(--color-dark)] leading-tight group-hover:text-[var(--color-primary)] transition-colors">John Doe</p>
-                <p className="text-xs text-[var(--color-gray-400)]">ahsanulr323@gmail.com</p>
+                <p className="text-sm font-bold text-[var(--color-dark)] leading-tight group-hover:text-[var(--color-primary)] transition-colors">{displayName}</p>
+                <p className="text-xs text-[var(--color-gray-400)]">{displayEmail}</p>
               </div>
             </Link>
             <button
@@ -106,7 +139,7 @@ export default function DashboardTopBar() {
                 Cancel
               </button>
               <button
-                onClick={() => { setShowLogoutModal(false); navigate('/'); }}
+                onClick={handleLogout}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-all cursor-pointer border-none"
               >
                 Logout
