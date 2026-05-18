@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaEdit } from 'react-icons/fa';
+import { GrFormView } from 'react-icons/gr';
+import { MdPhone, MdNotes } from 'react-icons/md';
 import { PARTICIPANTS } from './data';
 import type { DiaryParticipant } from './types';
-import ParticipantCard from './components/ParticipantCard';
 import TrustScoreView from './components/TrustScoreView';
 import InviteModal from './components/InviteModal';
+import ContactDetailModal from './components/ContactDetailModal';
+import { useGetDiaryContactsQuery } from '../../../../store/features/diaryContacts/diaryContactsApi';
+import type { DiaryContact } from '../../../../store/features/diaryContacts/diaryContactsApi.types';
 
 export default function DiaryPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selectedParticipant, setSelectedParticipant] = useState<DiaryParticipant | null>(null);
   const [showInvite, setShowInvite] = useState(false);
-
-  const filtered = PARTICIPANTS.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.handle.toLowerCase().includes(search.toLowerCase())
+  const [selectedContact, setSelectedContact] = useState<DiaryContact | null>(null);
+  
+  // Fetch diary contacts from API
+  const { data: diaryContacts = [], isLoading, error, refetch } = useGetDiaryContactsQuery();
+  
+  // Filter diary contacts by search
+  const filtered = diaryContacts.filter(
+    (contact) =>
+      contact.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      contact.email.toLowerCase().includes(search.toLowerCase()) ||
+      contact.phone.includes(search)
   );
 
   /* ── Trust Score Detail View ── */
@@ -78,30 +89,106 @@ export default function DiaryPage() {
 
       {/* Count */}
       <p className="text-sm text-[#64748B]">
-        {filtered.length} participant{filtered.length !== 1 ? 's' : ''} in your diary
+        {filtered.length} contact{filtered.length !== 1 ? 's' : ''} in your diary
       </p>
 
-      {/* Participant Cards */}
-      <div className="space-y-4">
-        {filtered.map((p) => (
-          <ParticipantCard
-            key={p.id}
-            participant={p}
-            onViewScore={setSelectedParticipant}
-          />
-        ))}
-        {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-sm text-[#94A3B8]">No participants found</p>
-          </div>
-        )}
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-12">
+          <p className="text-sm text-[#94A3B8]">Loading contacts...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-sm text-red-500">Failed to load contacts</p>
+        </div>
+      )}
+
+      {/* Diary Contact Cards */}
+      {!isLoading && !error && (
+        <div className="space-y-4">
+          {filtered.map((contact) => (
+            <div
+              key={contact.id}
+              className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              {/* Contact Header with Actions */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-[var(--color-dark)] truncate">{contact.fullName}</p>
+                  <p className="text-xs text-[#E57432] mt-1 truncate">{contact.email}</p>
+                </div>
+                <div className="flex items-center gap-1.5 ml-4 shrink-0">
+                  <button
+                    onClick={() => setSelectedContact(contact)}
+                    className="p-2 rounded-lg hover:bg-orange-50 cursor-pointer border-none bg-transparent transition-colors text-[#E57432] hover:text-[#D46028]"
+                    title="View details"
+                  >
+                    <GrFormView size={16} />
+                  </button>
+                  <button
+                    onClick={() => setSelectedContact(contact)}
+                    className="p-2 rounded-lg hover:bg-blue-50 cursor-pointer border-none bg-transparent transition-colors text-blue-500 hover:text-blue-600"
+                    title="Edit contact"
+                  >
+                    <FaEdit size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Contact Details */}
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center gap-2 text-sm text-[#64748B]">
+                  <MdPhone size={14} color="#E57432" className="shrink-0" />
+                  <span className="truncate">{contact.phone}</span>
+                </div>
+                {contact.notes && (
+                  <div className="flex items-start gap-2 text-sm text-[#64748B]">
+                    <MdNotes size={14} color="#E57432" className="shrink-0 mt-0.5" />
+                    <span className="flex-1 line-clamp-2">{contact.notes}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Metadata */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs text-[#94A3B8]">
+                <span>Added {new Date(contact.createdAt).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}</span>
+                <span>Updated {new Date(contact.updatedAt).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })}</span>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <p className="text-sm text-[#94A3B8]">
+                {diaryContacts.length === 0 ? 'No contacts yet. Invite someone to get started!' : 'No contacts match your search'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Invite Modal */}
       {showInvite && (
         <InviteModal
           participants={PARTICIPANTS}
-          onClose={() => setShowInvite(false)}
+          onClose={() => {
+            setShowInvite(false);
+            refetch();
+          }}
+        />
+      )}
+
+      {/* Contact Detail Modal */}
+      {selectedContact && (
+        <ContactDetailModal
+          contact={selectedContact}
+          onClose={() => setSelectedContact(null)}
+          onSuccess={() => {
+            setSelectedContact(null);
+            refetch();
+          }}
         />
       )}
     </div>

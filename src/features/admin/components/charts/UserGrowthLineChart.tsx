@@ -51,11 +51,6 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 export default function UserGrowthLineChart({ data }: Props) {
   const series = (data ?? []).map(d => ({ month: d.month, users: Number(d.users ?? 0), bankers: Number(d.bankers ?? 0), participants: Number(d.participants ?? 0) }));
-  const totals = {
-    users: series.reduce((s, x) => s + x.users, 0),
-    bankers: series.reduce((s, x) => s + x.bankers, 0),
-    participants: series.reduce((s, x) => s + x.participants, 0),
-  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 w-full">
