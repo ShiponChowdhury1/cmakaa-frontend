@@ -3,7 +3,7 @@ export interface NewPardnaFormData {
   name: string;
   description: string;
   contributionAmount: string;
-  frequency: 'Weekly' | 'Fortnightly' | 'Monthly' | '';
+  frequency: 'Daily' | 'Weekly' | 'Fortnightly' | 'Monthly' | 'Quarterly' | 'Yearly' | '';
   startDate: string;
   numberOfParticipants: string;
 
@@ -19,6 +19,7 @@ export interface NewPardnaFormData {
 export interface ParticipantEntry {
   id: number;
   name: string;
+  email: string;
   phone: string;
 }
 
@@ -27,18 +28,20 @@ export type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
 
 /* Demo data for auto-fill */
 export const DEMO_FORM: NewPardnaFormData = {
-  name: 'Family Monthly',
-  description: 'Monthly savings circle for the extended family',
-  contributionAmount: '200',
-  frequency: 'Monthly',
-  startDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
-  numberOfParticipants: '3',
+  name: 'Weekend Trip Fund',
+  description: 'Monthly savings group for our summer beach trip',
+  contributionAmount: '800',
+  frequency: 'Weekly',
+  startDate: '2026-05-01',
+  numberOfParticipants: '5',
   payoutOrder: 'Fixed order',
-  rulesNotes: '48h grace period for late payments. Payout on the last Friday of each round. Banker covers shortfalls.',
+  rulesNotes: 'Everyone contributes every Friday. Payout rotates weekly.',
   participants: [
-    { id: 1, name: 'Sarah Johnson', phone: '07700 900001' },
-    { id: 2, name: 'Marcus Williams', phone: '07700 900002' },
-    { id: 3, name: 'Aisha Patel', phone: '07700 900003' },
+    { id: 1, name: 'Alice Wonderland', email: 'alice@example.com', phone: '+15551234567' },
+    { id: 2, name: 'Bob Marley', email: 'bob@example.com', phone: '+15557654321' },
+    { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', phone: '+15559876543' },
+    { id: 4, name: 'Diana Prince', email: 'diana@example.com', phone: '+15554433221' },
+    { id: 5, name: 'Diana Prince', email: 'diana@example.com', phone: '+15554433221' },
   ],
   confirmed: true,
 };
@@ -53,9 +56,9 @@ export const INITIAL_FORM: NewPardnaFormData = {
   payoutOrder: '',
   rulesNotes: '',
   participants: [
-    { id: 1, name: '', phone: '' },
-    { id: 2, name: '', phone: '' },
-    { id: 3, name: '', phone: '' },
+    { id: 1, name: '', email: '', phone: '' },
+    { id: 2, name: '', email: '', phone: '' },
+    { id: 3, name: '', email: '', phone: '' },
   ],
   confirmed: false,
 };

@@ -12,121 +12,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
-
-interface Pardna {
-  id: string;
-  name: string;
-  amount: number;
-  participants: number;
-  rounds: number;
-  roundsCompleted: number;
-  frequency: string;
-  startDate: string;
-  collected: number;
-  status: 'active' | 'paused' | 'completed';
-}
-
-interface PayoutSchedule {
-  round: number;
-  participant: string;
-  date: string;
-  status: 'completed' | 'upcoming' | 'pending';
-}
-
-const PARDNAS: Record<string, Pardna> = {
-  '1': {
-    id: '1',
-    name: 'Family Monthly',
-    amount: 200,
-    participants: 8,
-    rounds: 8,
-    roundsCompleted: 7,
-    frequency: 'Monthly',
-    startDate: 'September 2024',
-    collected: 1600,
-    status: 'active',
-  },
-  '2': {
-    id: '2',
-    name: 'Work Friends Savings',
-    amount: 100,
-    participants: 6,
-    rounds: 6,
-    roundsCompleted: 4,
-    frequency: 'Fortnightly',
-    startDate: 'January 2025',
-    collected: 400,
-    status: 'active',
-  },
-  '3': {
-    id: '3',
-    name: 'Church Building Fund',
-    amount: 250,
-    participants: 12,
-    rounds: 12,
-    roundsCompleted: 11,
-    frequency: 'Monthly',
-    startDate: 'April 2024',
-    collected: 2750,
-    status: 'active',
-  },
-  '4': {
-    id: '4',
-    name: 'Sisters Circle',
-    amount: 100,
-    participants: 7,
-    rounds: 7,
-    roundsCompleted: 3,
-    frequency: 'Weekly',
-    startDate: 'February 2025',
-    collected: 300,
-    status: 'active',
-  },
-};
-
-const PAYOUT_SCHEDULES: Record<string, PayoutSchedule[]> = {
-  '1': [
-    { round: 1, participant: 'Grace M.', date: '2024-11-21', status: 'completed' },
-    { round: 2, participant: 'Michael T.', date: '2024-12-21', status: 'completed' },
-    { round: 3, participant: 'Sarah J.', date: '2025-01-21', status: 'completed' },
-    { round: 4, participant: 'David K.', date: '2025-02-21', status: 'completed' },
-    { round: 5, participant: 'Ama O.', date: '2025-03-21', status: 'completed' },
-    { round: 6, participant: 'Kwame B.', date: '2025-04-21', status: 'completed' },
-    { round: 7, participant: 'Ruth N.', date: '2025-05-21', status: 'completed' },
-    { round: 8, participant: 'Patrick L.', date: '2025-06-18', status: 'upcoming' },
-  ],
-  '2': [
-    { round: 1, participant: 'Sarah', date: '2025-02-15', status: 'completed' },
-    { round: 2, participant: 'Lisa A', date: '2025-03-01', status: 'completed' },
-    { round: 3, participant: 'Hassan T', date: '2025-03-15', status: 'completed' },
-    { round: 4, participant: 'Tomi B', date: '2025-04-01', status: 'completed' },
-    { round: 5, participant: 'Marcus B', date: '2025-04-15', status: 'upcoming' },
-    { round: 6, participant: 'Kevin S', date: '2025-05-01', status: 'pending' },
-  ],
-  '3': [
-    { round: 1, participant: 'Member 1', date: '2024-05-01', status: 'completed' },
-    { round: 2, participant: 'Member 2', date: '2024-06-01', status: 'completed' },
-    { round: 3, participant: 'Member 3', date: '2024-07-01', status: 'completed' },
-    { round: 4, participant: 'Member 4', date: '2024-08-01', status: 'completed' },
-    { round: 5, participant: 'Member 5', date: '2024-09-01', status: 'completed' },
-    { round: 6, participant: 'Member 6', date: '2024-10-01', status: 'completed' },
-    { round: 7, participant: 'Member 7', date: '2024-11-01', status: 'completed' },
-    { round: 8, participant: 'Member 8', date: '2024-12-01', status: 'completed' },
-    { round: 9, participant: 'Member 9', date: '2025-01-01', status: 'completed' },
-    { round: 10, participant: 'Member 10', date: '2025-02-01', status: 'completed' },
-    { round: 11, participant: 'Member 11', date: '2025-03-01', status: 'completed' },
-    { round: 12, participant: 'Member 12', date: '2025-04-01', status: 'upcoming' },
-  ],
-  '4': [
-    { round: 1, participant: 'Grace M.', date: '2025-02-15', status: 'completed' },
-    { round: 2, participant: 'Sarah J.', date: '2025-02-22', status: 'completed' },
-    { round: 3, participant: 'Lisa A', date: '2025-03-01', status: 'completed' },
-    { round: 4, participant: 'Nadia F', date: '2025-03-08', status: 'upcoming' },
-    { round: 5, participant: 'Ama O', date: '2025-03-15', status: 'pending' },
-    { round: 6, participant: 'Kwame B', date: '2025-03-22', status: 'pending' },
-    { round: 7, participant: 'Ruth N', date: '2025-03-29', status: 'pending' },
-  ],
-};
+import { useGetPardnaByIdQuery } from '@/store/features/createPardna/createPardna.api';
 
 export default function PardnaDetailPage() {
   const navigate = useNavigate();
@@ -135,8 +21,10 @@ export default function PardnaDetailPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'payments' | 'payouts'>('payments');
 
-  const pardna = id && PARDNAS[id];
-  const schedules = id ? PAYOUT_SCHEDULES[id] : [];
+  // Query details from live API endpoint
+  const { data: pardna, isLoading, isError } = useGetPardnaByIdQuery(id || '', {
+    skip: !id,
+  });
 
   const calendarDays = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth));
@@ -144,22 +32,45 @@ export default function PardnaDetailPage() {
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
-  if (!pardna) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-gray-500">Pardna not found</p>
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <div className="w-12 h-12 rounded-full border-4 border-orange-200 border-t-[#E57432] animate-spin" />
+        <p className="text-gray-500 font-medium">Loading Pardna details...</p>
       </div>
     );
   }
 
-  const cycleProgress = (pardna.roundsCompleted / pardna.rounds) * 100;
-  const nextRound = pardna.roundsCompleted + 1;
-  const nextPayout = schedules.find((s) => s.round === nextRound);
+  if (isError || !pardna) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
+        <p className="text-red-500 font-semibold">Pardna not found or error loading details</p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer border-none"
+          style={{ background: '#E57432' }}
+        >
+          Go Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const roundsCompleted = pardna.rounds?.filter((r) => r.status === 'COMPLETED').length || 0;
+  const totalRounds = pardna.totalRounds || 1;
+  const cycleProgress = (roundsCompleted / totalRounds) * 100;
+  const nextRoundNumber = pardna.currentRound || roundsCompleted + 1;
+  
+  // Find the next active or upcoming payout round
+  const nextRound = pardna.rounds?.find((r) => r.roundNumber === nextRoundNumber) ||
+    pardna.rounds?.find((r) => r.status === 'ACTIVE' || r.status === 'UPCOMING');
 
   const monthName = format(currentMonth, 'MMMM yyyy');
 
-  const highlightedDay = schedules.find((schedule) =>
-    isSameDay(new Date(schedule.date), selectedDate)
+  // Find round detail matching selected calendar date
+  const highlightedRound = pardna.rounds?.find((r) =>
+    isSameDay(new Date(r.payoutDate), selectedDate) ||
+    isSameDay(new Date(r.collectionDate), selectedDate)
   );
 
   return (
@@ -183,16 +94,16 @@ export default function PardnaDetailPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-lg border border-gray-100 p-4 text-center">
           <div className="text-xs text-gray-500 mb-1">Per Round</div>
-          <div className="text-2xl font-bold text-[var(--color-dark)]">£{pardna.amount}</div>
+          <div className="text-2xl font-bold text-[var(--color-dark)]">£{Number(pardna.contribution).toLocaleString()}</div>
         </div>
         <div className="bg-white rounded-lg border border-gray-100 p-4 text-center">
           <div className="text-xs text-gray-500 mb-1">Participants</div>
-          <div className="text-2xl font-bold text-[var(--color-dark)]">{pardna.participants}</div>
+          <div className="text-2xl font-bold text-[var(--color-dark)]">{pardna.participants?.length || 0}</div>
         </div>
         <div className="bg-white rounded-lg border border-gray-100 p-4 text-center">
           <div className="text-xs text-gray-500 mb-1">Rounds Done</div>
           <div className="text-2xl font-bold text-[var(--color-dark)]">
-            {pardna.roundsCompleted}/{pardna.rounds}
+            {roundsCompleted}/{totalRounds}
           </div>
         </div>
       </div>
@@ -212,11 +123,11 @@ export default function PardnaDetailPage() {
       </div>
 
       {/* Next payout notification */}
-      {nextPayout && (
+      {nextRound && (
         <div className="bg-[var(--color-primary)] text-white rounded-xl p-4">
-          <p className="text-sm font-semibold">Next payout: Round {nextRound}</p>
+          <p className="text-sm font-semibold">Next payout: Round {nextRound.roundNumber}</p>
           <p className="text-xs mt-1 opacity-90">
-            {nextPayout.participant} receives £{pardna.amount * pardna.participants} on {nextPayout.date}
+            {nextRound.payoutTo?.fullName} receives £{(Number(pardna.contribution) * (pardna.participants?.length || 0)).toLocaleString()} on {format(new Date(nextRound.payoutDate), 'dd MMM yyyy')}
           </p>
         </div>
       )}
@@ -289,10 +200,13 @@ export default function PardnaDetailPage() {
           <div className="grid grid-cols-7 gap-y-3 sm:gap-y-4 text-center">
             {calendarDays.map((day) => {
               const inMonth = day.getMonth() === currentMonth.getMonth();
-              const isCollectionDay = isSameDay(day, new Date(2024, 10, 20));
-              const isPayoutDay = isSameDay(day, new Date(2024, 10, 21));
+              
+              // Dynamic highlight matching round collection and payout dates
+              const isCollectionDay = pardna.rounds?.some((r) => isSameDay(new Date(r.collectionDate), day)) || false;
+              const isPayoutDay = pardna.rounds?.some((r) => isSameDay(new Date(r.payoutDate), day)) || false;
               const isCurrentDay = isToday(day);
               const isSelected = isSameDay(day, selectedDate);
+              const isConfirmedDay = pardna.rounds?.some((r) => r.status === 'COMPLETED' && (isSameDay(new Date(r.collectionDate), day) || isSameDay(new Date(r.payoutDate), day))) || false;
 
               return (
                 <button
@@ -310,6 +224,8 @@ export default function PardnaDetailPage() {
                       ? 'bg-[var(--color-primary)] text-white shadow-sm'
                       : isSelected
                       ? 'text-slate-900 font-semibold'
+                      : isConfirmedDay
+                      ? 'text-emerald-600 font-semibold'
                       : isPayoutDay
                       ? 'text-[#ff7a00] font-semibold'
                       : isCollectionDay
@@ -356,12 +272,14 @@ export default function PardnaDetailPage() {
           <p className="text-center text-slate-400">Tap a highlighted day to see round details</p>
         </div>
 
-        {highlightedDay && (
+        {highlightedRound && (
           <div className="mt-4 rounded-xl border border-orange-100 bg-orange-50/40 px-4 py-3 text-sm">
-            <p className="font-semibold text-[var(--color-dark)]">{highlightedDay.participant}</p>
+            <p className="font-semibold text-[var(--color-dark)]">Round {highlightedRound.roundNumber} - Payout to {highlightedRound.payoutTo?.fullName}</p>
             <p className="text-xs text-slate-500 mt-1">
-              Payout {format(new Date(highlightedDay.date), 'EEE, d MMM yyyy')}
+              Collection Date: {format(new Date(highlightedRound.collectionDate), 'EEE, d MMM yyyy')} <br />
+              Payout Date: {format(new Date(highlightedRound.payoutDate), 'EEE, d MMM yyyy')}
             </p>
+            <p className="text-xs font-semibold text-[#E57432] mt-1.5 uppercase">Status: {highlightedRound.status}</p>
           </div>
         )}
       </div>
@@ -370,30 +288,30 @@ export default function PardnaDetailPage() {
       <div>
         <h3 className="text-sm font-semibold text-[var(--color-dark)] mb-3">Payout Schedule</h3>
         <div className="space-y-2">
-          {schedules.map((schedule) => (
+          {pardna.rounds?.map((round) => (
             <div
-              key={schedule.round}
+              key={round.id}
               className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
-                  {schedule.round}
+                  {round.roundNumber}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-dark)]">{schedule.participant}</p>
-                  <p className="text-xs text-gray-500">{schedule.date}</p>
+                  <p className="text-sm font-medium text-[var(--color-dark)]">{round.payoutTo?.fullName}</p>
+                  <p className="text-xs text-gray-500">{format(new Date(round.payoutDate), 'dd MMM yyyy')}</p>
                 </div>
               </div>
               <span
                 className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  schedule.status === 'completed'
+                  round.status === 'COMPLETED'
                     ? 'bg-emerald-50 text-emerald-700'
-                    : schedule.status === 'upcoming'
+                    : round.status === 'ACTIVE'
                     ? 'bg-sky-50 text-sky-700'
                     : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {schedule.status === 'completed' ? '✓ Completed' : schedule.status === 'upcoming' ? 'Upcoming' : 'Pending'}
+                {round.status === 'COMPLETED' ? '✓ Completed' : round.status === 'ACTIVE' ? 'Active' : 'Upcoming'}
               </span>
             </div>
           ))}

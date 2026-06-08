@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FaEdit, FaCheck } from 'react-icons/fa';
 import { MdDelete, MdEmail, MdPhone, MdNotes } from 'react-icons/md';
-import { GrFormView } from 'react-icons/gr';
 import type { DiaryContact } from '../../../../../store/features/diaryContacts/diaryContactsApi.types';
 import {
   useUpdateDiaryContactMutation,

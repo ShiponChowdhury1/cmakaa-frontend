@@ -22,7 +22,7 @@ import RequireAdmin from '@/components/guards/RequireAdmin';
 // Admin
 import AdminLayout from '@/features/admin/AdminLayout';
 import OverviewPage     from '@/features/admin/pages/overview';
-import AllPardnasPage   from '@/features/admin/pages/pardnas';
+import AdminAllPardnasPage from '@/features/admin/pages/pardnas';
 import BankersPage      from '@/features/admin/pages/bankers';
 import ParticipantsPage from '@/features/admin/pages/participants';
 import KycReviewPage    from '@/features/admin/pages/kyc';
@@ -41,6 +41,7 @@ import GuidePage           from '@/features/dashboard/pages/guide';
 import NewPardnaPage       from '@/features/dashboard/pages/new-pardna';
 import DashboardAuditPage  from '@/features/dashboard/pages/audit';
 import PardnaDetailPage    from '@/features/dashboard/pages/pardna-detail';
+import AllPardnasPage      from '@/features/dashboard/pages/all-pardnas';
 
 
 export const router = createBrowserRouter([
@@ -103,7 +104,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'pardnas',
-        element: <AllPardnasPage />,
+        element: <AdminAllPardnasPage />,
       },
       {
         path: 'bankers',
@@ -168,6 +169,10 @@ export const router = createBrowserRouter([
       {
         path: 'audit',
         element: <DashboardAuditPage />,
+      },
+      {
+        path: 'pardnas',
+        element: <AllPardnasPage />,
       },
       {
         path: 'pardnas/new',

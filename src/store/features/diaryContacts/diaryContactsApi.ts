@@ -45,7 +45,7 @@ export const diaryContactsApi = baseApi.injectEndpoints({
     >({
       query: ({ contactId, data }) => ({
         url: `/diary-contacts/${contactId}`,
-        method: 'PUT',
+        method: 'PATCH',
         body: data,
       }),
       transformResponse: (response: DiaryContactResponse) => response.data,

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import type { NewPardnaFormData, ParticipantEntry } from '../types';
 import { DEMO_FORM, EXAMPLE_CONTACTS } from '../types';
+import {
+  Zap, ChevronRight, User, Mail, Phone, Trash2, PlusCircle,
+  CheckCircle2, Shield, UserPlus, Check
+} from 'lucide-react';
 
 interface Props {
   data: NewPardnaFormData;
@@ -8,7 +12,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#94A3B8] outline-none focus:border-[#E57432] transition-colors';
+  'w-full pl-12 pr-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
 
 function trustColor(trust: string) {
   if (trust === 'Strong') return '#10B981';
@@ -44,14 +48,11 @@ export default function StepParticipants({ data, onChange }: Props) {
   const addParticipant = () => {
     const newId = Math.max(0, ...data.participants.map((p) => p.id)) + 1;
     onChange({
-      participants: [...data.participants, { id: newId, name: '', phone: '' }],
+      participants: [...data.participants, { id: newId, name: '', email: '', phone: '' }],
     });
   };
 
   const selectContact = (id: number, contact: typeof EXAMPLE_CONTACTS[0]) => {
-    updateParticipant(id, 'name', contact.name);
-    updateParticipant(id, 'phone', contact.phone);
-    // Need to do both at once
     onChange({
       participants: data.participants.map((p) =>
         p.id === id ? { ...p, name: contact.name, phone: contact.phone } : p
@@ -65,195 +66,227 @@ export default function StepParticipants({ data, onChange }: Props) {
     (c) => c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filledCount = data.participants.filter((p) => p.name.trim() && p.email.trim() && p.phone.trim()).length;
+  const isFull = (p: ParticipantEntry) => !!(p.name.trim() && p.email.trim() && p.phone.trim());
+
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* Demo version button */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Demo auto-fill */}
       <button
         type="button"
         onClick={handleDemo}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium cursor-pointer transition-all hover:shadow-sm"
-        style={{ background: '#FFF7ED', border: '1px solid #FDDCB5', color: '#E57432' }}
+        className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-none"
+        style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)', color: '#B45309' }}
       >
-        <div className="flex items-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-          </svg>
-          <span className="font-semibold">Demo version</span>
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E57432, #F4A261)' }}>
+          <Zap size={16} className="text-white" />
         </div>
-        <span className="text-xs text-[#B45309]">Autofill every field with example details.</span>
+        <div className="text-left flex-1">
+          <p className="font-bold text-[#E57432] text-sm">Demo participants</p>
+          <p className="text-[11px] text-[#B45309] mt-0.5">Auto-fill with example contacts</p>
+        </div>
+        <ChevronRight size={16} className="text-[#E57432]" />
       </button>
 
-      {/* Warning banner */}
-      <div className="rounded-2xl p-4" style={{ background: '#FFF7ED', border: '1px solid #FDDCB5' }}>
-        <p className="text-sm font-bold text-[var(--color-dark)] mb-1">
-          A pardna is only as strong as its weakest link
-        </p>
-        <p className="text-xs text-[#64748B] leading-relaxed">
-          Choose participants who are <strong className="text-[var(--color-dark)]">punctual, trustworthy, and can comfortably afford</strong> the contributions. As banker, you'll need to chase late payments and cover any shortfalls to keep the cycle moving. Take your time — a strong group protects everyone.
-        </p>
+      {/* Section title + progress */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
+            Add Participants
+          </h2>
+          <p className="text-xs text-[#64748B] mt-0.5">Add the people joining your savings group</p>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: filledCount === data.participants.length && filledCount > 0 ? '#ECFDF5' : '#FFF7ED' }}>
+          <span className="text-xs font-bold" style={{ color: filledCount === data.participants.length && filledCount > 0 ? '#10B981' : '#E57432' }}>
+            {filledCount}/{data.participants.length} complete
+          </span>
+        </div>
       </div>
 
-      {/* Help text */}
-      <p className="text-xs text-[#64748B]">
-        Add participants now or later. Tap the contact icon to pick from your diary or phone book.
-      </p>
-
-      {/* Demo participants button */}
-      <button
-        type="button"
-        onClick={handleDemo}
-        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer transition-all border border-dashed border-[#E57432]/40 hover:border-[#E57432]"
-        style={{ background: '#FFFBF7', color: '#E57432' }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-        </svg>
-        <div className="text-left">
-          <p className="font-semibold">Demo participants</p>
-          <p className="text-xs text-[#B45309] font-normal mt-0.5">One-tap fill names, contacts, and draw order with examples.</p>
+      {/* Trust warning */}
+      <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF9E7)', border: '1.5px solid #FDDCB5' }}>
+        <div className="w-9 h-9 rounded-xl bg-[#E57432]/10 flex items-center justify-center shrink-0">
+          <Shield size={18} className="text-[#E57432]" />
         </div>
-      </button>
-
-      {/* Sort hint */}
-      <div className="flex items-center gap-2 text-xs text-[#64748B]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E57432" strokeWidth="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-        <span>Order here = payout order. High-trust members can go first.</span>
-        <button
-          type="button"
-          className="ml-auto text-[#E57432] font-semibold cursor-pointer bg-transparent border-none text-xs hover:underline"
-        >
-          Sort by trust
-        </button>
+        <div>
+          <p className="text-sm font-bold text-[var(--color-dark)] mb-0.5">Choose wisely</p>
+          <p className="text-xs text-[#64748B] leading-relaxed">
+            Pick members who are <strong className="text-[var(--color-dark)]">punctual & trustworthy</strong>. As banker, you cover any shortfalls.
+          </p>
+        </div>
       </div>
 
       {/* Participant cards */}
       <div className="space-y-4">
-        {data.participants.map((p, index) => (
-          <div key={p.id} className="border border-gray-200 rounded-2xl p-4 space-y-3">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[var(--color-dark)]">Participant {index + 1}</h3>
-              <button
-                onClick={() => removeParticipant(p.id)}
-                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 cursor-pointer bg-transparent border-none transition-colors"
+        {data.participants.map((p, index) => {
+          const complete = isFull(p);
+          return (
+            <div
+              key={p.id}
+              className="rounded-2xl overflow-hidden transition-all"
+              style={{
+                border: complete ? '2px solid #10B981' : '2px solid #F1F5F9',
+                boxShadow: complete ? '0 4px 16px rgba(16,185,129,0.08)' : '0 1px 4px rgba(0,0,0,0.03)',
+              }}
+            >
+              {/* Card header */}
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                style={{ background: complete ? '#F0FDF4' : '#F8FAFC' }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Full name with search */}
-            <div className="relative">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={p.name}
-                  onChange={(e) => {
-                    updateParticipant(p.id, 'name', e.target.value);
-                    setSearchingId(p.id);
-                    setSearchQuery(e.target.value);
-                  }}
-                  onFocus={() => {
-                    setSearchingId(p.id);
-                    setSearchQuery(p.name);
-                  }}
-                  placeholder="Full name"
-                  className={inputClass}
-                />
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: complete ? '#10B981' : p.name.trim() ? '#E57432' : '#CBD5E1' }}
+                  >
+                    {complete ? <Check size={14} strokeWidth={3} /> : index + 1}
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-[var(--color-dark)]">
+                      {p.name.trim() || `Participant ${index + 1}`}
+                    </span>
+                    {complete && (
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full ml-2">
+                        ✓ Ready
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <button
-                  type="button"
-                  onClick={() => {
-                    setSearchingId(searchingId === p.id ? null : p.id);
-                    setSearchQuery('');
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#E57432] bg-transparent border-none cursor-pointer transition-colors"
+                  onClick={() => removeParticipant(p.id)}
+                  disabled={data.participants.length <= 1}
+                  className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 cursor-pointer bg-transparent border-none transition-all rounded-xl hover:bg-red-50 disabled:opacity-20 disabled:cursor-not-allowed"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-                  </svg>
+                  <Trash2 size={15} />
                 </button>
               </div>
 
-              {/* Search contacts dropdown */}
-              {searchingId === p.id && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto">
-                  <p className="px-3 py-2 text-xs font-bold text-[#64748B] border-b border-gray-100">Search contacts…</p>
-                  {filteredContacts.map((contact) => (
-                    <button
-                      key={contact.phone}
-                      type="button"
-                      onClick={() => selectContact(p.id, contact)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[#FFF7ED] cursor-pointer bg-transparent border-none transition-colors text-left"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-[var(--color-dark)]">{contact.name}</p>
-                        <p className="text-xs text-[#94A3B8]">{contact.phone}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold" style={{ color: trustColor(contact.trust) }}>
-                          {contact.trust}
-                        </span>
-                        <span className="text-xs font-bold text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-md">
-                          {contact.score}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+              {/* Card body */}
+              <div className="p-4 space-y-3 bg-white">
+                {/* Full name */}
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
+                    <User size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    value={p.name}
+                    onChange={(e) => {
+                      updateParticipant(p.id, 'name', e.target.value);
+                      setSearchingId(p.id);
+                      setSearchQuery(e.target.value);
+                    }}
+                    onFocus={() => {
+                      setSearchingId(p.id);
+                      setSearchQuery(p.name);
+                    }}
+                    onBlur={() => setTimeout(() => setSearchingId(null), 200)}
+                    placeholder="Full name"
+                    className={inputClass}
+                  />
+                  {/* Contacts dropdown */}
+                  {searchingId === p.id && filteredContacts.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border-2 border-gray-100 rounded-2xl shadow-2xl z-10 max-h-52 overflow-y-auto">
+                      <p className="px-4 py-2.5 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest border-b border-gray-50">
+                        Suggested contacts
+                      </p>
+                      {filteredContacts.map((contact) => (
+                        <button
+                          key={contact.phone}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => selectContact(p.id, contact)}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/60 cursor-pointer bg-transparent border-none transition-colors text-left"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                              {contact.name.split(' ').map((n) => n[0]).join('')}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[var(--color-dark)]">{contact.name}</p>
+                              <p className="text-[10px] text-[#94A3B8]">{contact.phone}</p>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg" style={{ color: trustColor(contact.trust), background: `${trustColor(contact.trust)}12` }}>
+                            {contact.trust} · {contact.score}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Phone number */}
-            <div>
-              <input
-                type="text"
-                value={p.phone}
-                onChange={(e) => updateParticipant(p.id, 'phone', e.target.value)}
-                placeholder="Phone number"
-                className={inputClass}
-              />
-              <p className="text-xs text-[#E57432] mt-1 font-medium">Required</p>
+                {/* Email + Phone row */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
+                      <Mail size={15} />
+                    </div>
+                    <input
+                      type="email"
+                      value={p.email || ''}
+                      onChange={(e) => updateParticipant(p.id, 'email', e.target.value)}
+                      placeholder="Email address"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
+                      <Phone size={15} />
+                    </div>
+                    <input
+                      type="tel"
+                      value={p.phone}
+                      onChange={(e) => updateParticipant(p.id, 'phone', e.target.value)}
+                      placeholder="Phone number"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Add another participant */}
+      {/* Add participant */}
       <button
         type="button"
         onClick={addParticipant}
-        className="w-full py-3 rounded-xl text-white font-semibold text-sm cursor-pointer border-none transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
-        style={{ background: 'linear-gradient(135deg, #E57432 0%, #F4A261 100%)' }}
+        className="w-full py-4 rounded-2xl font-bold text-sm cursor-pointer border-2 border-dashed border-[#E57432]/25 text-[#E57432] bg-transparent hover:bg-orange-50/50 hover:border-[#E57432]/50 transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
       >
-        + Add another participant
+        <UserPlus size={18} />
+        Add Another Participant
       </button>
 
-      {/* Confirmation checkbox */}
+      {/* Confirmation */}
       <div
-        className="rounded-2xl p-4 flex items-start gap-3 cursor-pointer"
-        style={{ background: '#FFF7ED', border: '1px solid #FDDCB5' }}
+        className="rounded-2xl p-4 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-sm"
+        style={{
+          background: data.confirmed ? 'linear-gradient(135deg, #ECFDF5, #D1FAE5)' : '#F8FAFC',
+          border: data.confirmed ? '2px solid #10B981' : '2px solid #F1F5F9',
+        }}
         onClick={() => onChange({ confirmed: !data.confirmed })}
       >
         <div
-          className="w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all"
+          className="w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all"
           style={{
-            borderColor: data.confirmed ? '#E57432' : '#D1D5DB',
-            background: data.confirmed ? '#E57432' : 'transparent',
+            borderColor: data.confirmed ? '#10B981' : '#D1D5DB',
+            background: data.confirmed ? '#10B981' : 'transparent',
           }}
         >
           {data.confirmed && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
+            <Check size={14} className="text-white" strokeWidth={3} />
           )}
         </div>
-        <p className="text-xs text-[#64748B] leading-relaxed">
-          I've reviewed my participants and confirm they are trustworthy, punctual, and able to afford the contributions. I understand that as banker I'll need to step in if anyone falls short.
-        </p>
+        <div>
+          <p className="text-sm font-bold text-[var(--color-dark)] mb-0.5">
+            {data.confirmed ? '✓ Responsibility confirmed' : 'Confirm your responsibility'}
+          </p>
+          <p className="text-xs text-[#64748B] leading-relaxed">
+            I confirm all participants are <strong className="text-[var(--color-dark)]">trustworthy and able to contribute</strong>. I understand my responsibilities as banker.
+          </p>
+        </div>
       </div>
     </div>
   );
