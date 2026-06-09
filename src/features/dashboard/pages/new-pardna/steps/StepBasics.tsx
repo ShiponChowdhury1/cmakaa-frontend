@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import type { NewPardnaFormData } from '../types';
-import { DEMO_FORM } from '../types';
 import {
-  Zap, Tag, FileText, Users, Calendar, Check, ChevronRight,
+  Tag, FileText, Users, Calendar, Check,
   PoundSterling, Wallet, TrendingUp
 } from 'lucide-react';
 
@@ -12,7 +11,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gray-100 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
+  'w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
 
 const frequencies: { label: string; value: NonNullable<NewPardnaFormData['frequency']>; icon: string; desc: string }[] = [
   { label: 'Daily', value: 'Daily', icon: '☀️', desc: 'Every single day' },
@@ -24,9 +23,6 @@ const frequencies: { label: string; value: NonNullable<NewPardnaFormData['freque
 ];
 
 export default function StepBasics({ data, onChange }: Props) {
-  const handleDemo = () => {
-    onChange({ ...DEMO_FORM });
-  };
 
   const numParticipants = Number(data.numberOfParticipants) || 0;
   const contribution = Number(data.contributionAmount) || 0;
@@ -44,22 +40,6 @@ export default function StepBasics({ data, onChange }: Props) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Demo auto-fill */}
-      <button
-        type="button"
-        onClick={handleDemo}
-        className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-none"
-        style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)', color: '#B45309' }}
-      >
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E57432, #F4A261)' }}>
-          <Zap size={16} className="text-white" />
-        </div>
-        <div className="text-left flex-1">
-          <p className="font-bold text-[#E57432] text-sm">Quick demo</p>
-          <p className="text-[11px] text-[#B45309] mt-0.5">Auto-fill all fields with example data</p>
-        </div>
-        <ChevronRight size={16} className="text-[#E57432]" />
-      </button>
 
       {/* Section title + progress */}
       <div className="flex items-center justify-between">
@@ -249,7 +229,7 @@ export default function StepBasics({ data, onChange }: Props) {
                 key={f.value}
                 type="button"
                 onClick={() => onChange({ frequency: f.value })}
-                className="relative flex items-center gap-3.5 px-4 py-4 rounded-2xl text-sm cursor-pointer transition-all border-2 text-left group"
+                className="relative flex items-center gap-3.5 px-4 py-4 rounded-2xl text-sm cursor-pointer transition-all border text-left group"
                 style={{
                   background: isSelected ? 'linear-gradient(135deg, #FFF7ED, #FEF3C7)' : '#FFFFFF',
                   borderColor: isSelected ? '#E57432' : '#F1F5F9',

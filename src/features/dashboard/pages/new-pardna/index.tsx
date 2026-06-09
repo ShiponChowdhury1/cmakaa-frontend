@@ -152,7 +152,7 @@ export default function NewPardnaPage() {
             <button
               onClick={() => (step === 0 ? navigate('/dashboard') : back())}
               className="py-3.5 rounded-xl text-sm font-semibold cursor-pointer transition-all hover:bg-orange-50 active:scale-[0.98]"
-              style={{ background: '#FFFFFF', color: '#E57432', border: '1.5px solid #E57432' }}
+              style={{ background: '#FFFFFF', color: '#E57432', border: '1px solid #E57432' }}
             >
               ← Back
             </button>

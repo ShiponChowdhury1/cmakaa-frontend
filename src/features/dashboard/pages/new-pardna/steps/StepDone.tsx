@@ -1,6 +1,6 @@
 import type { NewPardnaFormData } from '../types';
 import {
-  Clock, Calendar, Users, PartyPopper, Wallet, TrendingUp,
+  Calendar, Users, Wallet, TrendingUp,
   PoundSterling, ArrowRight, ListOrdered
 } from 'lucide-react';
 
@@ -35,7 +35,7 @@ export default function StepDone({ data, onGoHome }: Props) {
       </div>
 
       {/* Summary card */}
-      <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-5 pt-5 pb-3">
           <h3 className="text-base font-bold text-[var(--color-dark)]">{data.name || 'Untitled Pardna'}</h3>
           {data.description && <p className="text-xs text-[#64748B] mt-1 italic">"{data.description}"</p>}
@@ -97,7 +97,7 @@ export default function StepDone({ data, onGoHome }: Props) {
       </div>
 
       {/* Draw order */}
-      <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
           <ListOrdered size={14} className="text-[#E57432]" />
           <p className="text-[10px] font-bold tracking-widest text-[#94A3B8] uppercase">Payout Order</p>

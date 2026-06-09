@@ -1,9 +1,8 @@
 import { useRef } from 'react';
 import type { NewPardnaFormData } from '../types';
-import { DEMO_FORM } from '../types';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { GripVertical, ChevronUp, ChevronDown, Zap, ChevronRight, Sparkles, Shuffle } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Sparkles, Shuffle } from 'lucide-react';
 
 interface Props {
   data: NewPardnaFormData;
@@ -127,11 +126,7 @@ export default function StepPayout({ data, onChange }: Props) {
   const namedParticipants = data.participants.filter((p) => p.name.trim());
   const totalPot = contribution * data.participants.length;
 
-  const handleDemo = () => {
-    onChange({
-      participants: DEMO_FORM.participants,
-    });
-  };
+
 
   const moveParticipant = (index: number, direction: 'up' | 'down') => {
     const arr = [...data.participants];
@@ -164,20 +159,6 @@ export default function StepPayout({ data, onChange }: Props) {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="space-y-5 animate-fade-in">
-        {/* Demo version button */}
-        <button
-          type="button"
-          onClick={handleDemo}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium cursor-pointer transition-all hover:shadow-sm active:scale-[0.99] border-none"
-          style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)', color: '#B45309' }}
-        >
-          <Zap size={18} className="text-[#E57432]" />
-          <div className="text-left flex-1">
-            <span className="font-semibold text-[#E57432]">Quick demo</span>
-            <span className="text-xs text-[#B45309] ml-2">Auto-fill payout order</span>
-          </div>
-          <ChevronRight size={16} className="text-[#E57432]" />
-        </button>
 
         {/* Title + Shuffle */}
         <div className="flex items-start justify-between gap-3">

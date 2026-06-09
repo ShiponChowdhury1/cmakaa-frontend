@@ -1,7 +1,7 @@
 import type { NewPardnaFormData } from '../types';
-import { DEMO_FORM } from '../types';
+
 import {
-  Zap, ChevronRight, Clock, Calendar, Users, Info,
+  Calendar, Users, Info,
   PoundSterling, Wallet, TrendingUp, Tag, ListOrdered
 } from 'lucide-react';
 
@@ -15,28 +15,8 @@ export default function StepSummary({ data, onChange }: Props) {
   const contribution = Number(data.contributionAmount) || 0;
   const totalPot = contribution * numParticipants;
 
-  const handleDemo = () => {
-    onChange({ ...DEMO_FORM });
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Demo version button */}
-      <button
-        type="button"
-        onClick={handleDemo}
-        className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-none"
-        style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)', color: '#B45309' }}
-      >
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E57432, #F4A261)' }}>
-          <Zap size={16} className="text-white" />
-        </div>
-        <div className="text-left flex-1">
-          <p className="font-bold text-[#E57432] text-sm">Quick demo</p>
-          <p className="text-[11px] text-[#B45309] mt-0.5">Auto-fill all fields with examples</p>
-        </div>
-        <ChevronRight size={16} className="text-[#E57432]" />
-      </button>
 
       {/* Title */}
       <div>
@@ -49,7 +29,7 @@ export default function StepSummary({ data, onChange }: Props) {
       </div>
 
       {/* Summary card */}
-      <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         {/* Pardna name header */}
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-center gap-2 mb-1">
@@ -119,7 +99,7 @@ export default function StepSummary({ data, onChange }: Props) {
 
       {/* Participants list preview */}
       {numParticipants > 0 && (
-        <div className="bg-white border-2 border-gray-100 rounded-2xl p-5">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <ListOrdered size={14} className="text-[#E57432]" />
             <span className="text-[10px] font-bold tracking-widest text-[#94A3B8] uppercase">Payout Order</span>
@@ -141,7 +121,7 @@ export default function StepSummary({ data, onChange }: Props) {
       )}
 
       {/* Info note */}
-      <div className="flex items-start gap-3 rounded-2xl p-4" style={{ background: '#F8FAFC', border: '2px solid #F1F5F9' }}>
+      <div className="flex items-start gap-3 rounded-2xl p-4" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
         <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
           <Info size={16} className="text-blue-400" />
         </div>

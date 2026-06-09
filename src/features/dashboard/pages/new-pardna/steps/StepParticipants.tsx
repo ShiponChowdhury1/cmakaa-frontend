@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { NewPardnaFormData, ParticipantEntry } from '../types';
-import { DEMO_FORM, EXAMPLE_CONTACTS } from '../types';
 import {
-  Zap, ChevronRight, User, Mail, Phone, Trash2, PlusCircle,
-  CheckCircle2, Shield, UserPlus, Check
+  Zap, ChevronRight, User, Mail, Phone, Trash2,
+  UserPlus, Users, Check
 } from 'lucide-react';
+import { useGetDiaryContactsQuery } from '../../../../../store/features/diaryContacts/diaryContactsApi';
 
 interface Props {
   data: NewPardnaFormData;
@@ -12,24 +12,59 @@ interface Props {
 }
 
 const inputClass =
-  'w-full pl-12 pr-4 py-3.5 rounded-2xl border-2 border-gray-100 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
+  'w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
 
-function trustColor(trust: string) {
-  if (trust === 'Strong') return '#10B981';
-  if (trust === 'Fair') return '#F59E0B';
-  if (trust === 'Developing') return '#3B82F6';
-  return '#EF4444';
-}
+
 
 export default function StepParticipants({ data, onChange }: Props) {
   const [searchingId, setSearchingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleDemo = () => {
-    onChange({
-      participants: DEMO_FORM.participants,
-      confirmed: true,
+  // Fetch diary contacts from RTK Query
+  const { data: diaryContacts = [], isLoading } = useGetDiaryContactsQuery();
+
+  // Determine if current list matches diary contacts
+  const isAutoFilled =
+    diaryContacts.length > 0 &&
+    data.participants.length === diaryContacts.length &&
+    data.participants.every((p, index) => {
+      const contact = diaryContacts[index];
+      return (
+        contact &&
+        p.name === contact.fullName &&
+        (p.email || '') === (contact.email || '') &&
+        p.phone === contact.phone
+      );
     });
+
+  const handleToggle = () => {
+    if (diaryContacts.length === 0) return;
+
+    if (!isAutoFilled) {
+      // Map all available diary contacts to participants
+      const newParticipants = diaryContacts.map((contact, index) => ({
+        id: index + 1,
+        name: contact.fullName,
+        email: contact.email || '',
+        phone: contact.phone,
+      }));
+
+      onChange({
+        participants: newParticipants,
+        numberOfParticipants: newParticipants.length.toString(),
+      });
+    } else {
+      // Clear participant fields
+      const clearedParticipants = data.participants.map((p) => ({
+        id: p.id,
+        name: '',
+        email: '',
+        phone: '',
+      }));
+      onChange({
+        participants: clearedParticipants,
+      });
+    }
   };
 
   const updateParticipant = (id: number, field: keyof ParticipantEntry, value: string) => {
@@ -52,41 +87,110 @@ export default function StepParticipants({ data, onChange }: Props) {
     });
   };
 
-  const selectContact = (id: number, contact: typeof EXAMPLE_CONTACTS[0]) => {
+
+
+  const selectContact = (
+    id: number,
+    contact: { name: string; phone: string; email?: string }
+  ) => {
     onChange({
       participants: data.participants.map((p) =>
-        p.id === id ? { ...p, name: contact.name, phone: contact.phone } : p
+        p.id === id
+          ? {
+              ...p,
+              name: contact.name,
+              phone: contact.phone,
+              email: contact.email || p.email,
+            }
+          : p
       ),
     });
     setSearchingId(null);
     setSearchQuery('');
   };
 
-  const filteredContacts = EXAMPLE_CONTACTS.filter(
-    (c) => c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Format database diary contacts as suggested contacts
+  const allSuggestedContacts = (diaryContacts || []).map((c) => ({
+    key: `diary-${c.id}`,
+    name: c.fullName,
+    phone: c.phone,
+    email: c.email,
+  }));
+
+  const filteredContacts = allSuggestedContacts.filter((c) => {
+    // Hide already selected participants to prevent duplicate selection in other fields
+    const isAlreadyAdded = data.participants.some(
+      (participant) =>
+        participant.id !== searchingId &&
+        participant.name.trim().toLowerCase() === c.name.trim().toLowerCase()
+    );
+    if (isAlreadyAdded) return false;
+
+    const query = searchQuery.trim().toLowerCase();
+    // If the query is empty or matches the current participant's name exactly (on focus),
+    // show all non-added suggested contacts.
+    const activeParticipant = data.participants.find((p) => p.id === searchingId);
+    if (!query || (activeParticipant && query === activeParticipant.name.trim().toLowerCase())) {
+      return true;
+    }
+
+    return (
+      c.name.toLowerCase().includes(query) ||
+      c.phone.includes(query) ||
+      (c.email && c.email.toLowerCase().includes(query))
+    );
+  });
 
   const filledCount = data.participants.filter((p) => p.name.trim() && p.email.trim() && p.phone.trim()).length;
   const isFull = (p: ParticipantEntry) => !!(p.name.trim() && p.email.trim() && p.phone.trim());
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Demo auto-fill */}
-      <button
-        type="button"
-        onClick={handleDemo}
-        className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium cursor-pointer transition-all hover:shadow-md active:scale-[0.98] border-none"
-        style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)', color: '#B45309' }}
+      {/* Toggle switch for Diary Auto-fill */}
+      <div
+        className="flex items-center justify-between p-4 rounded-2xl border transition-all"
+        style={{
+          background: isAutoFilled ? 'rgba(229, 116, 50, 0.02)' : '#FFFFFF',
+          borderColor: isAutoFilled ? '#E57432' : '#F1F5F9',
+        }}
       >
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E57432, #F4A261)' }}>
-          <Zap size={16} className="text-white" />
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+            style={{
+              background: isAutoFilled ? 'linear-gradient(135deg, #E57432, #F4A261)' : '#F8FAFC',
+              color: isAutoFilled ? '#FFFFFF' : '#94A3B8',
+            }}
+          >
+            <Users size={20} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[var(--color-dark)]">Use Diary Contacts</p>
+            <p className="text-[11px] text-[#64748B] mt-0.5">
+              {diaryContacts.length === 0
+                ? 'No contacts in your diary to auto-fill'
+                : isAutoFilled
+                ? 'Populated with your diary contacts'
+                : 'Automatically load details from your contacts'}
+            </p>
+          </div>
         </div>
-        <div className="text-left flex-1">
-          <p className="font-bold text-[#E57432] text-sm">Demo participants</p>
-          <p className="text-[11px] text-[#B45309] mt-0.5">Auto-fill with example contacts</p>
-        </div>
-        <ChevronRight size={16} className="text-[#E57432]" />
-      </button>
+
+        <button
+          type="button"
+          disabled={diaryContacts.length === 0}
+          onClick={handleToggle}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
+            isAutoFilled ? 'bg-[#E57432]' : 'bg-gray-200'
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              isAutoFilled ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
 
       {/* Section title + progress */}
       <div className="flex items-center justify-between">
@@ -103,35 +207,25 @@ export default function StepParticipants({ data, onChange }: Props) {
         </div>
       </div>
 
-      {/* Trust warning */}
-      <div className="rounded-2xl p-4 flex items-start gap-3" style={{ background: 'linear-gradient(135deg, #FFF7ED, #FEF9E7)', border: '1.5px solid #FDDCB5' }}>
-        <div className="w-9 h-9 rounded-xl bg-[#E57432]/10 flex items-center justify-center shrink-0">
-          <Shield size={18} className="text-[#E57432]" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-[var(--color-dark)] mb-0.5">Choose wisely</p>
-          <p className="text-xs text-[#64748B] leading-relaxed">
-            Pick members who are <strong className="text-[var(--color-dark)]">punctual & trustworthy</strong>. As banker, you cover any shortfalls.
-          </p>
-        </div>
-      </div>
 
       {/* Participant cards */}
       <div className="space-y-4">
         {data.participants.map((p, index) => {
           const complete = isFull(p);
+          const isSearching = searchingId === p.id;
           return (
             <div
               key={p.id}
-              className="rounded-2xl overflow-hidden transition-all"
+              className="rounded-2xl transition-all relative"
               style={{
-                border: complete ? '2px solid #10B981' : '2px solid #F1F5F9',
+                border: complete ? '1px solid #10B981' : '1px solid #F1F5F9',
                 boxShadow: complete ? '0 4px 16px rgba(16,185,129,0.08)' : '0 1px 4px rgba(0,0,0,0.03)',
+                zIndex: isSearching ? 30 : 1,
               }}
             >
               {/* Card header */}
               <div
-                className="flex items-center justify-between px-4 py-3"
+                className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
                 style={{ background: complete ? '#F0FDF4' : '#F8FAFC' }}
               >
                 <div className="flex items-center gap-3">
@@ -162,7 +256,7 @@ export default function StepParticipants({ data, onChange }: Props) {
               </div>
 
               {/* Card body */}
-              <div className="p-4 space-y-3 bg-white">
+              <div className="p-4 space-y-3 bg-white rounded-b-2xl">
                 {/* Full name */}
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
@@ -185,33 +279,45 @@ export default function StepParticipants({ data, onChange }: Props) {
                     className={inputClass}
                   />
                   {/* Contacts dropdown */}
-                  {searchingId === p.id && filteredContacts.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border-2 border-gray-100 rounded-2xl shadow-2xl z-10 max-h-52 overflow-y-auto">
+                  {searchingId === p.id && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-2xl z-10 max-h-52 overflow-y-auto">
                       <p className="px-4 py-2.5 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest border-b border-gray-50">
                         Suggested contacts
                       </p>
-                      {filteredContacts.map((contact) => (
-                        <button
-                          key={contact.phone}
-                          type="button"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => selectContact(p.id, contact)}
-                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/60 cursor-pointer bg-transparent border-none transition-colors text-left"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-[11px] font-bold text-gray-500">
-                              {contact.name.split(' ').map((n) => n[0]).join('')}
+                      {isLoading ? (
+                        <div className="px-4 py-4 text-center text-xs text-[#94A3B8]">
+                          Loading contacts...
+                        </div>
+                      ) : filteredContacts.length > 0 ? (
+                        filteredContacts.map((contact) => (
+                          <button
+                            key={contact.key}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectContact(p.id, contact)}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-orange-50/60 cursor-pointer bg-transparent border-none transition-colors text-left"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                                {(contact.name || 'Anonymous').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-[var(--color-dark)]">{contact.name}</p>
+                                <p className="text-[10px] text-[#94A3B8]">{contact.phone}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-semibold text-[var(--color-dark)]">{contact.name}</p>
-                              <p className="text-[10px] text-[#94A3B8]">{contact.phone}</p>
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg" style={{ color: trustColor(contact.trust), background: `${trustColor(contact.trust)}12` }}>
-                            {contact.trust} · {contact.score}
-                          </span>
-                        </button>
-                      ))}
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg text-[#E57432] bg-[#E57432]/10">
+                              Diary Contact
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-4 text-center text-xs text-[#94A3B8]">
+                          {diaryContacts.length === 0
+                            ? 'No contacts in your diary yet.'
+                            : 'No matching contacts found.'}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -253,41 +359,13 @@ export default function StepParticipants({ data, onChange }: Props) {
       <button
         type="button"
         onClick={addParticipant}
-        className="w-full py-4 rounded-2xl font-bold text-sm cursor-pointer border-2 border-dashed border-[#E57432]/25 text-[#E57432] bg-transparent hover:bg-orange-50/50 hover:border-[#E57432]/50 transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
+        className="w-full py-4 rounded-2xl font-bold text-sm cursor-pointer border border-dashed border-[#E57432]/25 text-[#E57432] bg-transparent hover:bg-orange-50/50 hover:border-[#E57432]/50 transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
       >
         <UserPlus size={18} />
         Add Another Participant
       </button>
 
-      {/* Confirmation */}
-      <div
-        className="rounded-2xl p-4 flex items-start gap-3.5 cursor-pointer transition-all hover:shadow-sm"
-        style={{
-          background: data.confirmed ? 'linear-gradient(135deg, #ECFDF5, #D1FAE5)' : '#F8FAFC',
-          border: data.confirmed ? '2px solid #10B981' : '2px solid #F1F5F9',
-        }}
-        onClick={() => onChange({ confirmed: !data.confirmed })}
-      >
-        <div
-          className="w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all"
-          style={{
-            borderColor: data.confirmed ? '#10B981' : '#D1D5DB',
-            background: data.confirmed ? '#10B981' : 'transparent',
-          }}
-        >
-          {data.confirmed && (
-            <Check size={14} className="text-white" strokeWidth={3} />
-          )}
-        </div>
-        <div>
-          <p className="text-sm font-bold text-[var(--color-dark)] mb-0.5">
-            {data.confirmed ? '✓ Responsibility confirmed' : 'Confirm your responsibility'}
-          </p>
-          <p className="text-xs text-[#64748B] leading-relaxed">
-            I confirm all participants are <strong className="text-[var(--color-dark)]">trustworthy and able to contribute</strong>. I understand my responsibilities as banker.
-          </p>
-        </div>
-      </div>
+
     </div>
   );
 }
