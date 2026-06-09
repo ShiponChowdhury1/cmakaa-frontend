@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { NewPardnaFormData, ParticipantEntry } from '../types';
 import {
   Zap, ChevronRight, User, Mail, Phone, Trash2,
@@ -23,24 +23,34 @@ export default function StepParticipants({ data, onChange }: Props) {
   // Fetch diary contacts from RTK Query
   const { data: diaryContacts = [], isLoading } = useGetDiaryContactsQuery();
 
-  // Determine if current list matches diary contacts
-  const isAutoFilled =
-    diaryContacts.length > 0 &&
-    data.participants.length === diaryContacts.length &&
-    data.participants.every((p, index) => {
-      const contact = diaryContacts[index];
-      return (
-        contact &&
-        p.name === contact.fullName &&
-        (p.email || '') === (contact.email || '') &&
-        p.phone === contact.phone
-      );
-    });
+  const [isToggleOn, setIsToggleOn] = useState(false);
+  const [hasInitializedToggle, setHasInitializedToggle] = useState(false);
+  const [originalCount] = useState(() => data.participants.length);
+
+  useEffect(() => {
+    if (diaryContacts.length > 0 && !hasInitializedToggle) {
+      const matches =
+        data.participants.length === diaryContacts.length &&
+        data.participants.every((p, index) => {
+          const contact = diaryContacts[index];
+          return (
+            contact &&
+            p.name === contact.fullName &&
+            (p.email || '') === (contact.email || '') &&
+            p.phone === contact.phone
+          );
+        });
+      if (matches) {
+        setIsToggleOn(true);
+      }
+      setHasInitializedToggle(true);
+    }
+  }, [diaryContacts, hasInitializedToggle, data.participants]);
 
   const handleToggle = () => {
     if (diaryContacts.length === 0) return;
 
-    if (!isAutoFilled) {
+    if (!isToggleOn) {
       // Map all available diary contacts to participants
       const newParticipants = diaryContacts.map((contact, index) => ({
         id: index + 1,
@@ -53,21 +63,19 @@ export default function StepParticipants({ data, onChange }: Props) {
         participants: newParticipants,
         numberOfParticipants: newParticipants.length.toString(),
       });
+      setIsToggleOn(true);
     } else {
-      // Clear participant fields
-      const clearedParticipants = data.participants.map((p) => ({
-        id: p.id,
-        name: '',
-        email: '',
-        phone: '',
-      }));
+      // Clear data and reset to a single empty participant field
       onChange({
-        participants: clearedParticipants,
+        participants: [{ id: 1, name: '', email: '', phone: '' }],
+        numberOfParticipants: '1',
       });
+      setIsToggleOn(false);
     }
   };
 
   const updateParticipant = (id: number, field: keyof ParticipantEntry, value: string) => {
+    setIsToggleOn(false);
     onChange({
       participants: data.participants.map((p) =>
         p.id === id ? { ...p, [field]: value } : p
@@ -76,23 +84,24 @@ export default function StepParticipants({ data, onChange }: Props) {
   };
 
   const removeParticipant = (id: number) => {
+    setIsToggleOn(false);
     if (data.participants.length <= 1) return;
     onChange({ participants: data.participants.filter((p) => p.id !== id) });
   };
 
   const addParticipant = () => {
+    setIsToggleOn(false);
     const newId = Math.max(0, ...data.participants.map((p) => p.id)) + 1;
     onChange({
       participants: [...data.participants, { id: newId, name: '', email: '', phone: '' }],
     });
   };
 
-
-
   const selectContact = (
     id: number,
     contact: { name: string; phone: string; email?: string }
   ) => {
+    setIsToggleOn(false);
     onChange({
       participants: data.participants.map((p) =>
         p.id === id
@@ -146,20 +155,20 @@ export default function StepParticipants({ data, onChange }: Props) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Toggle switch for Diary Auto-fill */}
+      {/* Toggle switch for Diary Auto-fill - Commented out for now
       <div
         className="flex items-center justify-between p-4 rounded-2xl border transition-all"
         style={{
-          background: isAutoFilled ? 'rgba(229, 116, 50, 0.02)' : '#FFFFFF',
-          borderColor: isAutoFilled ? '#E57432' : '#F1F5F9',
+          background: isToggleOn ? 'rgba(229, 116, 50, 0.02)' : '#FFFFFF',
+          borderColor: isToggleOn ? '#E57432' : '#F1F5F9',
         }}
       >
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
             style={{
-              background: isAutoFilled ? 'linear-gradient(135deg, #E57432, #F4A261)' : '#F8FAFC',
-              color: isAutoFilled ? '#FFFFFF' : '#94A3B8',
+              background: isToggleOn ? 'linear-gradient(135deg, #E57432, #F4A261)' : '#F8FAFC',
+              color: isToggleOn ? '#FFFFFF' : '#94A3B8',
             }}
           >
             <Users size={20} />
@@ -169,7 +178,7 @@ export default function StepParticipants({ data, onChange }: Props) {
             <p className="text-[11px] text-[#64748B] mt-0.5">
               {diaryContacts.length === 0
                 ? 'No contacts in your diary to auto-fill'
-                : isAutoFilled
+                : isToggleOn
                 ? 'Populated with your diary contacts'
                 : 'Automatically load details from your contacts'}
             </p>
@@ -181,16 +190,17 @@ export default function StepParticipants({ data, onChange }: Props) {
           disabled={diaryContacts.length === 0}
           onClick={handleToggle}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed ${
-            isAutoFilled ? 'bg-[#E57432]' : 'bg-gray-200'
+            isToggleOn ? 'bg-[#E57432]' : 'bg-gray-200'
           }`}
         >
           <span
             className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              isAutoFilled ? 'translate-x-5' : 'translate-x-0'
+              isToggleOn ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>
       </div>
+      */}
 
       {/* Section title + progress */}
       <div className="flex items-center justify-between">

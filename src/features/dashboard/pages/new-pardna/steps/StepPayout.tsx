@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { NewPardnaFormData } from '../types';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { GripVertical, ChevronUp, ChevronDown, Sparkles, Shuffle } from 'lucide-react';
+import { GripVertical, ChevronUp, ChevronDown, Shuffle } from 'lucide-react';
 
 interface Props {
   data: NewPardnaFormData;
@@ -217,49 +217,7 @@ export default function StepPayout({ data, onChange }: Props) {
           </div>
         )}
 
-        {/* Example / Preview */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={14} className="text-[#E57432]" />
-            <span className="text-xs font-bold text-[#E57432] tracking-wider">Example</span>
-            <span className="text-xs text-[#94A3B8]">Preview</span>
-          </div>
-          <p className="text-xs text-[#64748B] mb-3">
-            Once you've added participants, drag them into the payout order — here's how it'll look.
-          </p>
 
-          {/* Example cards */}
-          <div className="space-y-2">
-            {[
-              { round: 1, name: 'Sarah', label: 'Pays out first' },
-              { round: 2, name: 'Marcus', label: 'Pays out next' },
-              { round: 3, name: 'Aisha', label: 'Final round' },
-            ].map((ex) => (
-              <div
-                key={ex.round}
-                className="flex items-center justify-between px-4 py-3.5 rounded-xl border"
-                style={{ background: '#FAFAFA', borderColor: '#E5E7EB' }}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white"
-                    style={{ background: '#CBD5E1' }}
-                  >
-                    {ex.round}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[#94A3B8]">Round {ex.round} · {ex.name}</p>
-                    <p className="text-xs text-[#CBD5E1] mt-0.5">{ex.label} · £600</p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-[#CBD5E1] bg-[#F1F5F9] px-2 py-1 rounded-md">
-                  Position {ex.round}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-[#94A3B8] mt-2 italic text-center">Example only — not real data.</p>
-        </div>
       </div>
     </DndProvider>
   );

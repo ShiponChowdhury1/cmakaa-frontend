@@ -6,6 +6,9 @@ import {
   useUpdateDiaryContactMutation,
   useDeleteDiaryContactMutation,
 } from '../../../../../store/features/diaryContacts/diaryContactsApi';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { toast } from 'react-toastify';
 
 interface Props {
   contact: DiaryContact;
@@ -27,7 +30,7 @@ export default function ContactDetailModal({ contact, isEditMode = false, onClos
 
   const handleSave = async () => {
     if (!fullName.trim() || !email.trim() || !phone.trim()) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -42,22 +45,24 @@ export default function ContactDetailModal({ contact, isEditMode = false, onClos
         },
       }).unwrap();
 
+      toast.success('🎉 Contact updated successfully!');
       setEditMode(false);
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update contact:', error);
-      alert('Failed to update contact. Please try again.');
+      toast.error(error?.data?.message || 'Failed to update contact. Please try again.');
     }
   };
 
   const handleDelete = async () => {
     try {
       await deleteContact(contact.id).unwrap();
+      toast.success('🗑️ Contact deleted successfully!');
       onSuccess?.();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete contact:', error);
-      alert('Failed to delete contact. Please try again.');
+      toast.error(error?.data?.message || 'Failed to delete contact. Please try again.');
     }
   };
 
@@ -138,12 +143,12 @@ export default function ContactDetailModal({ contact, isEditMode = false, onClos
 
             <div className="mb-4">
               <label className="block text-sm font-semibold text-[var(--color-dark)] mb-1.5">Phone</label>
-              <input
-                type="tel"
+              <PhoneInput
+                placeholder="Enter phone number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(+)07700 900000"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#94A3B8] outline-none focus:border-[#E57432] transition-colors"
+                onChange={(val) => setPhone(val || '')}
+                defaultCountry="GB"
+                className="custom-phone-input"
               />
             </div>
 

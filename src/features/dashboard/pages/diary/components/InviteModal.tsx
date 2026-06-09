@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { FaUserPlus, FaLink, FaCalendar, FaSearch, FaPaperPlane } from 'react-icons/fa';
 import type { DiaryParticipant } from '../types';
 import { useCreateDiaryContactMutation } from '../../../../../store/features/diaryContacts/diaryContactsApi';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { toast } from 'react-toastify';
 
 function trustBg(t: number) {
   if (t >= 90) return '#F0FDF4';
@@ -172,12 +175,12 @@ export default function InviteModal({ participants, onClose }: Props) {
             {/* Phone or Email */}
             <div className="mb-3">
               <label className="block text-sm font-semibold text-[var(--color-dark)] mb-1.5">Phone</label>
-              <input
-                type="text"
+              <PhoneInput
+                placeholder="Enter phone number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="(+)07700 900000"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#94A3B8] outline-none focus:border-[#E57432] transition-colors"
+                onChange={(val) => setPhone(val || '')}
+                defaultCountry="GB"
+                className="custom-phone-input"
               />
             </div>
 
@@ -209,7 +212,7 @@ export default function InviteModal({ participants, onClose }: Props) {
             <button
               onClick={async () => {
                 if (!name.trim() || !email.trim() || !phone.trim()) {
-                  alert('Please fill in all required fields');
+                  toast.error('Please fill in all required fields');
                   return;
                 }
                 try {
@@ -219,15 +222,16 @@ export default function InviteModal({ participants, onClose }: Props) {
                     phone,
                     notes: notes.trim() || undefined,
                   }).unwrap();
+                  toast.success('🎉 Invite sent successfully!');
                   // Reset form
                   setName('');
                   setEmail('');
                   setPhone('');
                   setNotes('');
                   onClose();
-                } catch (error) {
+                } catch (error: any) {
                   console.error('Failed to create diary contact:', error);
-                  alert('Failed to create diary contact. Please try again.');
+                  toast.error(error?.data?.message || 'Failed to send invite. Please try again.');
                 }
               }}
               disabled={isLoading}

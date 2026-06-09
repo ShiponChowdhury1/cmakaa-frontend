@@ -201,3 +201,47 @@ h1, h2, h3, h4, h5, h6 {
 .stagger-children > *:nth-child(6) { animation-delay: 500ms; }
 .stagger-children > *:nth-child(7) { animation-delay: 600ms; }
 .stagger-children > *:nth-child(8) { animation-delay: 700ms; }
+
+/* ── react-phone-number-input overrides ── */
+.custom-phone-input {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  padding: 0 1rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.custom-phone-input:focus-within {
+  border-color: #E57432 !important;
+  box-shadow: 0 0 0 4px rgba(229, 116, 50, 0.08) !important;
+}
+
+.custom-phone-input .PhoneInputCountry {
+  margin-right: 0.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.custom-phone-input .PhoneInputCountrySelect {
+  cursor: pointer !important;
+}
+
+.custom-phone-input .PhoneInputInput {
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 2.75rem !important;
+  border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #111827 !important;
+  background-color: transparent !important;
+}
+
+.custom-phone-input .PhoneInputInput::placeholder {
+  color: #94A3B8 !important;
+}

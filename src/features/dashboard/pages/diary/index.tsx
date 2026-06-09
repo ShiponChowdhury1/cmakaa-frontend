@@ -43,7 +43,8 @@ export default function DiaryPage() {
 
   /* ── Participant Diary List View ── */
   return (
-    <div className="space-y-5 animate-fade-in pb-24">
+    <>
+      <div className="space-y-5 animate-fade-in pb-24">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -168,6 +169,7 @@ export default function DiaryPage() {
           )}
         </div>
       )}
+      </div>
 
       {/* Invite Modal */}
       {showInvite && (
@@ -191,6 +193,6 @@ export default function DiaryPage() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
