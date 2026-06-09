@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { NewPardnaFormData, ParticipantEntry } from '../types';
 import {
-  Zap, ChevronRight, User, Mail, Phone, Trash2,
-  UserPlus, Users, Check
+  User, Mail, Phone, Trash2,
+  UserPlus, Check
 } from 'lucide-react';
 import { useGetDiaryContactsQuery } from '../../../../../store/features/diaryContacts/diaryContactsApi';
 
@@ -14,68 +14,12 @@ interface Props {
 const inputClass =
   'w-full pl-12 pr-4 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#C0C8D4] outline-none focus:border-[#E57432] focus:ring-4 focus:ring-[#E57432]/8 transition-all font-medium';
 
-
-
 export default function StepParticipants({ data, onChange }: Props) {
   const [searchingId, setSearchingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
   // Fetch diary contacts from RTK Query
   const { data: diaryContacts = [], isLoading } = useGetDiaryContactsQuery();
-
-  const [isToggleOn, setIsToggleOn] = useState(false);
-  const [hasInitializedToggle, setHasInitializedToggle] = useState(false);
-  const [originalCount] = useState(() => data.participants.length);
-
-  useEffect(() => {
-    if (diaryContacts.length > 0 && !hasInitializedToggle) {
-      const matches =
-        data.participants.length === diaryContacts.length &&
-        data.participants.every((p, index) => {
-          const contact = diaryContacts[index];
-          return (
-            contact &&
-            p.name === contact.fullName &&
-            (p.email || '') === (contact.email || '') &&
-            p.phone === contact.phone
-          );
-        });
-      if (matches) {
-        setIsToggleOn(true);
-      }
-      setHasInitializedToggle(true);
-    }
-  }, [diaryContacts, hasInitializedToggle, data.participants]);
-
-  const handleToggle = () => {
-    if (diaryContacts.length === 0) return;
-
-    if (!isToggleOn) {
-      // Map all available diary contacts to participants
-      const newParticipants = diaryContacts.map((contact, index) => ({
-        id: index + 1,
-        name: contact.fullName,
-        email: contact.email || '',
-        phone: contact.phone,
-      }));
-
-      onChange({
-        participants: newParticipants,
-        numberOfParticipants: newParticipants.length.toString(),
-      });
-      setIsToggleOn(true);
-    } else {
-      // Clear data and reset to a single empty participant field
-      onChange({
-        participants: [{ id: 1, name: '', email: '', phone: '' }],
-        numberOfParticipants: '1',
-      });
-      setIsToggleOn(false);
-    }
-  };
-
   const updateParticipant = (id: number, field: keyof ParticipantEntry, value: string) => {
-    setIsToggleOn(false);
     onChange({
       participants: data.participants.map((p) =>
         p.id === id ? { ...p, [field]: value } : p
@@ -84,13 +28,11 @@ export default function StepParticipants({ data, onChange }: Props) {
   };
 
   const removeParticipant = (id: number) => {
-    setIsToggleOn(false);
     if (data.participants.length <= 1) return;
     onChange({ participants: data.participants.filter((p) => p.id !== id) });
   };
 
   const addParticipant = () => {
-    setIsToggleOn(false);
     const newId = Math.max(0, ...data.participants.map((p) => p.id)) + 1;
     onChange({
       participants: [...data.participants, { id: newId, name: '', email: '', phone: '' }],
@@ -101,7 +43,6 @@ export default function StepParticipants({ data, onChange }: Props) {
     id: number,
     contact: { name: string; phone: string; email?: string }
   ) => {
-    setIsToggleOn(false);
     onChange({
       participants: data.participants.map((p) =>
         p.id === id
@@ -117,7 +58,6 @@ export default function StepParticipants({ data, onChange }: Props) {
     setSearchingId(null);
     setSearchQuery('');
   };
-
   // Format database diary contacts as suggested contacts
   const allSuggestedContacts = (diaryContacts || []).map((c) => ({
     key: `diary-${c.id}`,

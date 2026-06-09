@@ -57,6 +57,8 @@ export interface Payment {
 
 export interface Payout {
   id: string;
+  roundId: string;
+  participantId: string;
   amount: string;
   status: string;
   confirmedAt: string | null;
@@ -112,3 +114,83 @@ export interface CreatePardnaResponse {
   message: string;
   data: Pardna;
 }
+
+export interface PayoutHistoryRound {
+  roundNumber: number;
+  pardna: {
+    name: string;
+  };
+}
+
+export interface PayoutHistoryParticipant {
+  id: string;
+  pardnaId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  payoutOrder: number;
+  status: string;
+  joinedAt: string;
+}
+
+export interface PayoutHistoryConfirmedBy {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface PayoutHistoryEntry {
+  id: string;
+  roundId: string;
+  participantId: string;
+  amount: string;
+  status: string;
+  confirmedAt: string | null;
+  confirmedById: string | null;
+  notes: string | null;
+  createdAt: string;
+  round: PayoutHistoryRound;
+  participant: PayoutHistoryParticipant;
+  confirmedBy: PayoutHistoryConfirmedBy | null;
+}
+
+export interface PayoutDetailRound {
+  id: string;
+  pardnaId: string;
+  roundNumber: number;
+  collectionDate: string;
+  payoutDate: string;
+  payoutToId: string;
+  status: string;
+  pardna: {
+    id: string;
+    bankerId: string;
+    name: string;
+    description: string;
+    notes: string;
+    contribution: string;
+    frequency: string;
+    startDate: string;
+    status: string;
+    totalRounds: number;
+    currentRound: number;
+    createdAt: string;
+  };
+}
+
+export interface PayoutDetailEntry {
+  id: string;
+  roundId: string;
+  participantId: string;
+  amount: string;
+  status: string;
+  confirmedAt: string | null;
+  confirmedById: string | null;
+  notes: string | null;
+  createdAt: string;
+  round: PayoutDetailRound;
+  participant: PayoutHistoryParticipant;
+  confirmedBy: PayoutHistoryConfirmedBy | null;
+}
+
+

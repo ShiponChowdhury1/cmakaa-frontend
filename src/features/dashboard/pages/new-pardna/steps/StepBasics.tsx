@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { NewPardnaFormData } from '../types';
 import {
   Tag, FileText, Users, Calendar, Check,
-  PoundSterling, Wallet, TrendingUp,
+  Wallet, TrendingUp,
   Sun, CalendarRange, CalendarDays, BarChart3, Target,
   ChevronDown,
   type LucideIcon

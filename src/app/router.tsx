@@ -35,6 +35,7 @@ import HomePage            from '@/features/dashboard/pages/home';
 import DiaryPage           from '@/features/dashboard/pages/diary';
 import PaymentsPage        from '@/features/dashboard/pages/payments';
 import PayoutsPage         from '@/features/dashboard/pages/payouts';
+import PayoutDetailPage    from '@/features/dashboard/pages/payouts/PayoutDetailPage';
 import NotificationsPage   from '@/features/dashboard/pages/notifications';
 import ProfilePage         from '@/features/dashboard/pages/profile';
 import GuidePage           from '@/features/dashboard/pages/guide';
@@ -153,6 +154,10 @@ export const router = createBrowserRouter([
       {
         path: 'payouts',
         element: <PayoutsPage />,
+      },
+      {
+        path: 'payouts/:payoutId',
+        element: <PayoutDetailPage />,
       },
       {
         path: 'notifications',

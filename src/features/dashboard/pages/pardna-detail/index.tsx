@@ -131,13 +131,18 @@ export default function PardnaDetailPage() {
           </p>
         </div>
       )}
-
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3">
-        <button className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[var(--color-primary)] hover:opacity-90 transition-all cursor-pointer border-none">
+        <button
+          onClick={() => navigate(`/dashboard/payments?pardnaId=${id}`)}
+          className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-[var(--color-primary)] hover:opacity-90 transition-all cursor-pointer border-none"
+        >
           + Record Payment
         </button>
-        <button className="w-full py-3 rounded-xl text-sm font-semibold text-[var(--color-primary)] bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all cursor-pointer">
+        <button
+          onClick={() => navigate(`/dashboard/payments?pardnaId=${id}&section=payout`)}
+          className="w-full py-3 rounded-xl text-sm font-semibold text-[var(--color-primary)] bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all cursor-pointer"
+        >
           Manage Payouts
         </button>
       </div>

@@ -10,7 +10,7 @@ interface Props {
   onChange: (d: Partial<NewPardnaFormData>) => void;
 }
 
-export default function StepSummary({ data, onChange }: Props) {
+export default function StepSummary({ data, onChange: _onChange }: Props) {
   const numParticipants = data.participants.filter((p) => p.name.trim()).length || Number(data.numberOfParticipants) || 0;
   const contribution = Number(data.contributionAmount) || 0;
   const totalPot = contribution * numParticipants;
