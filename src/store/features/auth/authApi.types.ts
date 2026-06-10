@@ -97,7 +97,7 @@ export interface MeResponseData {
   lastName: string;
   profilePicture: string | null;
   addressId: string | null;
-  kycStatus: string;
+  kycStatus: string | null;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;

@@ -18,6 +18,11 @@ import NewPasswordPage from '@/features/auth/NewPasswordPage';
 // Guards
 import RequireAuth from '@/components/guards/RequireAuth';
 import RequireAdmin from '@/components/guards/RequireAdmin';
+import RequireKyc from '@/components/guards/RequireKyc';
+
+// KYC
+import KycSubmitPage from '@/features/kyc/KycSubmitPage';
+import KycPendingPage from '@/features/kyc/KycPendingPage';
 
 // Admin
 import AdminLayout from '@/features/admin/AdminLayout';
@@ -90,6 +95,24 @@ export const router = createBrowserRouter([
     ],
   },
 
+  // KYC Routes — requires authentication but NOT KYC approval
+  {
+    path: '/kyc',
+    element: (
+      <RequireAuth>
+        <KycSubmitPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: '/kyc/pending',
+    element: (
+      <RequireAuth>
+        <KycPendingPage />
+      </RequireAuth>
+    ),
+  },
+
   // Admin Dashboard — requires ADMIN role
   {
     path: '/admin',
@@ -130,13 +153,13 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // User Dashboard — requires authentication
+  // User Dashboard — requires authentication + KYC APPROVED
   {
     path: '/dashboard',
     element: (
-      <RequireAuth>
+      <RequireKyc>
         <DashboardLayout />
-      </RequireAuth>
+      </RequireKyc>
     ),
     children: [
       {
@@ -190,4 +213,3 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-

@@ -207,41 +207,112 @@ export default function PardnaDetailPage() {
               const inMonth = day.getMonth() === currentMonth.getMonth();
               
               // Dynamic highlight matching round collection and payout dates
+              const isStartDate = pardna.startDate ? isSameDay(new Date(pardna.startDate), day) : false;
+              const lastRound = pardna.rounds?.[pardna.rounds.length - 1];
+              const isEndDate = lastRound ? isSameDay(new Date(lastRound.payoutDate), day) : false;
+
               const isCollectionDay = pardna.rounds?.some((r) => isSameDay(new Date(r.collectionDate), day)) || false;
               const isPayoutDay = pardna.rounds?.some((r) => isSameDay(new Date(r.payoutDate), day)) || false;
               const isCurrentDay = isToday(day);
               const isSelected = isSameDay(day, selectedDate);
               const isConfirmedDay = pardna.rounds?.some((r) => r.status === 'COMPLETED' && (isSameDay(new Date(r.collectionDate), day) || isSameDay(new Date(r.payoutDate), day))) || false;
 
-              return (
+              const isNextPayoutDay = nextRound ? isSameDay(new Date(nextRound.payoutDate), day) : false;
+
+              // Match round details for tooltip and highlighting
+              const roundForDay = pardna.rounds?.find(
+                (r) => isSameDay(new Date(r.payoutDate), day) || isSameDay(new Date(r.collectionDate), day)
+              );
+
+              // Set tooltip text
+              let tooltipText = '';
+              if (inMonth) {
+                if (isNextPayoutDay && nextRound) {
+                  const potAmount = Number(pardna.contribution) * (pardna.participants?.length || 0);
+                  tooltipText = `Next Payout: ${nextRound.payoutTo?.fullName} (Round ${nextRound.roundNumber}) - £${potAmount.toLocaleString()}`;
+                } else if (isPayoutDay && roundForDay) {
+                  const potAmount = Number(pardna.contribution) * (pardna.participants?.length || 0);
+                  tooltipText = `Payout Day: ${roundForDay.payoutTo?.fullName} (Round ${roundForDay.roundNumber}) - £${potAmount.toLocaleString()}`;
+                } else if (isCollectionDay && roundForDay) {
+                  tooltipText = `Collection Day (Round ${roundForDay.roundNumber}) - £${Number(pardna.contribution).toLocaleString()}`;
+                } else if (isStartDate) {
+                  tooltipText = `Pardna Start Date: ${format(new Date(pardna.startDate), 'dd MMM yyyy')}`;
+                } else if (isEndDate && lastRound) {
+                  tooltipText = `Pardna End Date: ${format(new Date(lastRound.payoutDate), 'dd MMM yyyy')}`;
+                }
+
+                if (isCurrentDay) {
+                  tooltipText = tooltipText ? `${tooltipText} (Today)` : 'Today';
+                }
+              }
+
+              // Determine classes matching the legend colors
+              let dayStyles = '';
+              if (inMonth) {
+                if (isNextPayoutDay) {
+                  // Next Payout: Blue circle with glowing rings/shadows to stand out
+                  dayStyles = 'bg-blue-500 text-white font-bold shadow-md ring-4 ring-blue-300 ring-offset-1 scale-105';
+                } else if (isPayoutDay) {
+                  dayStyles = 'bg-blue-500 text-white font-semibold';
+                } else if (isCollectionDay) {
+                  dayStyles = 'bg-[#ff8a00] text-white font-semibold';
+                } else if (isStartDate) {
+                  dayStyles = 'border border-orange-200 bg-white text-[#ff8a00] font-semibold rounded';
+                } else if (isEndDate) {
+                  dayStyles = 'bg-slate-800 text-white font-semibold rounded';
+                } else if (isCurrentDay) {
+                  dayStyles = 'border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-bold';
+                } else if (isConfirmedDay) {
+                  dayStyles = 'text-emerald-600 font-semibold hover:bg-slate-100';
+                } else if (isSelected) {
+                  dayStyles = 'text-slate-900 font-semibold hover:bg-slate-100';
+                } else {
+                  dayStyles = 'text-slate-500 hover:bg-slate-100';
+                }
+              } else {
+                dayStyles = 'text-slate-300';
+              }
+
+              const dayButton = (
                 <button
-                  key={day.toISOString()}
                   type="button"
                   onClick={() => {
                     if (inMonth) {
                       setSelectedDate(day);
                     }
                   }}
-                  className={`mx-auto h-11 w-11 sm:h-12 sm:w-12 rounded-full text-sm sm:text-base font-medium transition-all ${
+                  className={`mx-auto h-11 w-11 sm:h-12 sm:w-12 rounded-full text-sm sm:text-base font-medium transition-all relative flex items-center justify-center ${
                     inMonth ? 'cursor-pointer' : 'cursor-default'
-                  } ${
-                    isCurrentDay
-                      ? 'bg-[var(--color-primary)] text-white shadow-sm'
-                      : isSelected
-                      ? 'text-slate-900 font-semibold'
-                      : isConfirmedDay
-                      ? 'text-emerald-600 font-semibold'
-                      : isPayoutDay
-                      ? 'text-[#ff7a00] font-semibold'
-                      : isCollectionDay
-                      ? 'text-slate-900 font-semibold'
-                      : inMonth
-                      ? 'text-slate-500 hover:bg-slate-100'
-                      : 'text-slate-300'
-                  }`}
+                  } ${dayStyles}`}
                 >
-                  {format(day, 'd')}
+                  <span className={isCurrentDay && (isPayoutDay || isCollectionDay || isStartDate || isEndDate) ? 'mt-[-4px]' : ''}>
+                    {format(day, 'd')}
+                  </span>
+                  {isCurrentDay && (
+                    <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+                      isPayoutDay || isCollectionDay || isEndDate ? 'bg-white' : 'bg-[var(--color-primary)]'
+                    }`} />
+                  )}
                 </button>
+              );
+
+              if (tooltipText) {
+                return (
+                  <div key={day.toISOString()} className="relative group flex items-center justify-center">
+                    {dayButton}
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200 z-50 whitespace-nowrap shadow-lg border border-slate-700">
+                      {tooltipText}
+                      {/* Tooltip arrow */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={day.toISOString()} className="flex items-center justify-center">
+                  {dayButton}
+                </div>
               );
             })}
           </div>
@@ -274,7 +345,7 @@ export default function PardnaDetailPage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-slate-400">Tap a highlighted day to see round details</p>
+          <p className="text-center text-slate-400">Hover or tap a highlighted day to see details</p>
         </div>
 
         {highlightedRound && (
@@ -296,28 +367,43 @@ export default function PardnaDetailPage() {
           {pardna.rounds?.map((round) => (
             <div
               key={round.id}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100"
+              className={`flex items-center justify-between p-4 bg-white rounded-xl border transition-all ${
+                round.roundNumber === nextRound?.roundNumber
+                  ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-sm'
+                  : 'border-gray-100'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                  round.roundNumber === nextRound?.roundNumber
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
                   {round.roundNumber}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--color-dark)]">{round.payoutTo?.fullName}</p>
+                  <p className="text-sm font-semibold text-[var(--color-dark)]">{round.payoutTo?.fullName}</p>
                   <p className="text-xs text-gray-500">{format(new Date(round.payoutDate), 'dd MMM yyyy')}</p>
                 </div>
               </div>
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  round.status === 'COMPLETED'
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : round.status === 'ACTIVE'
-                    ? 'bg-sky-50 text-sky-700'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {round.status === 'COMPLETED' ? '✓ Completed' : round.status === 'ACTIVE' ? 'Active' : 'Upcoming'}
-              </span>
+              <div className="flex flex-col items-end gap-1.5">
+                <span
+                  className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    round.status === 'COMPLETED'
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : round.status === 'ACTIVE'
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {round.status === 'COMPLETED' ? '✓ Completed' : round.status === 'ACTIVE' ? 'Active' : 'Upcoming'}
+                </span>
+                {round.roundNumber === nextRound?.roundNumber && (
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    Next Payout
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>

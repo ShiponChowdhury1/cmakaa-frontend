@@ -53,12 +53,21 @@ export default function LoginPage() {
           }),
         );
 
-        // Redirect based on user role
+        // Redirect based on user role + KYC status
         const role = result.data.user.role?.toUpperCase();
         if (role === 'ADMIN') {
           navigate('/admin', { replace: true });
         } else {
-          navigate('/dashboard', { replace: true });
+          // Route based on kycStatus — only APPROVED gets dashboard
+          const kycStatus = result.data.user.kycStatus;
+          if (kycStatus === 'APPROVED') {
+            navigate('/dashboard', { replace: true });
+          } else if (kycStatus === 'PENDING') {
+            navigate('/kyc/pending', { replace: true });
+          } else {
+            // null, undefined, REJECTED, or any other value → KYC form
+            navigate('/kyc', { replace: true });
+          }
         }
       }
     } catch (err: unknown) {
