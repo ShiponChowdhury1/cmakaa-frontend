@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Printer, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { Printer, ChevronLeft, ChevronRight, Search, X, Calendar, ShieldCheck, Activity, Award } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import StatsCard from '../../components/StatsCard';
 import { useGetAdminBankersQuery } from '@/store/features/adminDashboard/adminDashboardApi';
@@ -37,141 +37,494 @@ const makeSign = (label: string, desc: string, rating: Rating): TrustSign => ({ 
 
 // ─── Trust Summary Card (Print Modal) ─────────────────────────────────────────
 
+function TrustScoreRing({ score }: { score: number }) {
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+  
+  const scoreRingColor = (s: number) =>
+    s >= 88 ? '#16A34A' : s >= 75 ? '#E57432' : '#EF4444';
+  
+  const color = scoreRingColor(score);
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0">
+      <svg width="104" height="104" viewBox="0 0 96 96" className="transform -rotate-90">
+        {/* Background ring */}
+        <circle cx="48" cy="48" r={radius} fill="none" stroke="#F1F5F9" strokeWidth="6" />
+        {/* Progress ring */}
+        <circle
+          cx="48" cy="48" r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={`${progress} ${circumference - progress}`}
+          className="transition-all duration-1000 ease-out"
+        />
+      </svg>
+      {/* Score text absolute center */}
+      <div className="absolute flex flex-col items-center justify-center">
+        <span className="text-2xl font-extrabold tracking-tight" style={{ color }}>
+          {score}
+        </span>
+        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider -mt-1">
+          / 100
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function TrustCard({ banker, onClose }: { banker: Banker; onClose: () => void }) {
-  const scoreColor =
-    banker.trustScore >= 88 ? '#10B981' : banker.trustScore >= 75 ? '#F59E0B' : '#EF4444';
+  const ratingBadgeStyle = (r: Rating) => {
+    switch (r) {
+      case 'Strong': return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+      case 'Fair':   return 'text-orange-700 bg-orange-50 border-orange-200';
+      case 'Weak':   return 'text-red-700 bg-red-50 border-red-200';
+    }
+  };
+
+  const ratingDot = (r: Rating) => {
+    switch (r) {
+      case 'Strong': return '#16A34A';
+      case 'Fair':   return '#E57432';
+      case 'Weak':   return '#EF4444';
+    }
+  };
+
+  const handlePrint = () => {
+    const win = window.open('', '_blank', 'width=850,height=900');
+    if (!win) return;
+
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('en-GB', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+    });
+
+    const scoreRingColor = (s: number) =>
+      s >= 88 ? '#16A34A' : s >= 75 ? '#E57432' : '#EF4444';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Trust Assessment Report - ${banker.name}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Inter', sans-serif;
+              color: #0f172a;
+              background-color: #ffffff;
+              padding: 40px;
+              line-height: 1.5;
+            }
+            .report-card {
+              border: 1px solid #e2e8f0;
+              border-radius: 24px;
+              overflow: hidden;
+              max-width: 760px;
+              margin: 0 auto;
+              box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            }
+            .header {
+              background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+              color: #ffffff;
+              padding: 40px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              position: relative;
+            }
+            .header-info h1 {
+              font-family: 'Outfit', sans-serif;
+              font-size: 32px;
+              font-weight: 800;
+              margin-bottom: 6px;
+              letter-spacing: -0.5px;
+            }
+            .header-info p {
+              color: #94a3b8;
+              font-size: 15px;
+              font-weight: 500;
+            }
+            .logo-badge {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 20px;
+            }
+            .logo-icon {
+              width: 32px;
+              height: 32px;
+              border-radius: 8px;
+              background-color: #f97316;
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 800;
+              font-size: 16px;
+            }
+            .logo-text {
+              font-family: 'Outfit', sans-serif;
+              font-weight: 700;
+              font-size: 15px;
+              letter-spacing: 0.5px;
+            }
+            .score-circle {
+              width: 100px;
+              height: 100px;
+              border-radius: 50%;
+              border: 8px solid ${scoreRingColor(banker.trustScore)};
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              font-weight: 800;
+              font-size: 32px;
+              color: #ffffff;
+              background-color: rgba(255, 255, 255, 0.04);
+            }
+            .score-circle span {
+              font-size: 11px;
+              color: #94a3b8;
+              font-weight: 600;
+              text-transform: uppercase;
+              margin-top: -2px;
+            }
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              background-color: #f8fafc;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .stat-item {
+              padding: 24px 16px;
+              text-align: center;
+              border-right: 1px solid #e2e8f0;
+            }
+            .stat-item:last-child {
+              border-right: none;
+            }
+            .stat-label {
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 1.2px;
+              color: #64748b;
+              margin-bottom: 6px;
+              font-weight: 600;
+            }
+            .stat-val {
+              font-size: 20px;
+              font-weight: 750;
+              color: #0f172a;
+            }
+            .content {
+              padding: 40px;
+            }
+            .content h2 {
+              font-family: 'Outfit', sans-serif;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 1.5px;
+              color: #f97316;
+              margin-bottom: 24px;
+              font-weight: 700;
+            }
+            .signs-list {
+              display: flex;
+              flex-direction: column;
+            }
+            .sign-row {
+              display: flex;
+              align-items: center;
+              padding: 16px 0;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .sign-row:last-child {
+              border-bottom: none;
+            }
+            .sign-num {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              background-color: #0f172a;
+              color: #ffffff;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              font-weight: 700;
+              font-size: 13px;
+              margin-right: 18px;
+              flex-shrink: 0;
+            }
+            .sign-info {
+              flex-grow: 1;
+            }
+            .sign-title {
+              font-weight: 700;
+              font-size: 15px;
+              margin-bottom: 3px;
+              color: #0f172a;
+            }
+            .sign-desc {
+              font-size: 12px;
+              color: #64748b;
+            }
+            .sign-rating {
+              font-weight: 700;
+              font-size: 13px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 4px 12px;
+              border-radius: 9999px;
+            }
+            .rating-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              display: inline-block;
+            }
+            .footer {
+              text-align: center;
+              padding: 24px;
+              font-size: 12px;
+              color: #94a3b8;
+              font-weight: 500;
+              border-top: 1px solid #e2e8f0;
+              background-color: #f8fafc;
+            }
+            @media print {
+              body { padding: 0; }
+              .report-card { border: none; box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="report-card">
+            <div class="header">
+              <div class="header-info">
+                <div class="logo-badge">
+                  <div class="logo-icon">P</div>
+                  <span class="logo-text">PardnaBook</span>
+                </div>
+                <h1>${banker.name}</h1>
+                <p>${banker.username} &middot; Trust Assessment Profile</p>
+              </div>
+              <div class="score-circle">
+                ${banker.trustScore}
+                <span>Score</span>
+              </div>
+            </div>
+            
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">Active Pardnas</div>
+                <div class="stat-val">${banker.activePardnas}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Completed</div>
+                <div class="stat-val">${banker.completedPardnas}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Member Since</div>
+                <div class="stat-val">${banker.memberSince}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Overall Rating</div>
+                <div class="stat-val" style="color: ${scoreRingColor(banker.trustScore)}">${banker.overall}</div>
+              </div>
+            </div>
+            
+            <div class="content">
+              <h2>The 7 Signs of Trust</h2>
+              <div class="signs-list">
+                ${banker.signs.map((sign, i) => {
+                  const color = ratingDot(sign.rating);
+                  return `
+                    <div class="sign-row">
+                      <div class="sign-num">${i + 1}</div>
+                      <div class="sign-info">
+                        <div class="sign-title">${sign.label}</div>
+                        <div class="sign-desc">${sign.desc}</div>
+                      </div>
+                      <div class="sign-rating" style="color: ${color}; background-color: ${color}10">
+                        <span class="rating-dot" style="background-color: ${color}"></span>
+                        ${sign.rating}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+            
+            <div class="footer">
+              Generated by PardnaBook Admin &middot; ${formattedDate} &middot; Official Trust Record
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    win.document.open();
+    win.document.write(htmlContent);
+    win.document.close();
+  };
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[999] flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative flex flex-col rounded-2xl overflow-hidden shadow-2xl"
-        style={{ width: 680, maxHeight: '90vh', overflowY: 'auto' }}
+        className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-scale-in"
         onClick={(e) => e.stopPropagation()}
-        id="trust-print-area"
       >
-        {/* Dark header — two-column layout */}
-        <div className="px-8 pt-8 pb-7" style={{ background: '#1B2A4A' }}>
-          <div className="flex items-start gap-8">
-            {/* Left: branding + name + score */}
-            <div className="flex-1 min-w-0">
-              {/* Logo row */}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center text-white font-bold text-sm">P</div>
-                <span className="text-white font-semibold text-sm">PardnaBook</span>
-              </div>
-              <h2 className="text-2xl font-bold text-white leading-tight">{banker.name}</h2>
-              <p className="text-gray-400 text-sm mt-1">{banker.username} · Trust Summary Card</p>
+        {/* Card Header (Premium Dark Panel) */}
+        <div className="bg-slate-900 px-6 py-6 text-white flex items-center justify-between relative overflow-hidden">
+          {/* Subtle grid pattern in header background */}
+          <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:14px_14px]"></div>
 
-              {/* Trust Score ring */}
-              <div className="flex items-center gap-4 mt-6">
-                <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center font-bold text-3xl shrink-0"
-                  style={{ border: `5px solid ${scoreColor}`, color: scoreColor, background: 'rgba(255,255,255,0.05)' }}
-                >
-                  {banker.trustScore}
-                </div>
-                <div>
-                  <p className="text-white font-semibold text-base">Trust Score</p>
-                  <p className="text-gray-400 text-xs mt-0.5">Composite behavioural rating</p>
-                  <span className="inline-block mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ background: scoreColor + '22', color: scoreColor, border: `1px solid ${scoreColor}55` }}>
-                    {banker.overall}
-                  </span>
-                </div>
+          <div className="relative z-10 flex-1 min-w-0 pr-4">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-6 h-6 rounded-md bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs">
+                P
               </div>
+              <span className="text-xs font-bold tracking-widest text-orange-400 uppercase">
+                PardnaBook Profile
+              </span>
             </div>
+            <h2 className="text-xl font-extrabold tracking-tight truncate leading-tight mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+              {banker.name}
+            </h2>
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs text-slate-400 font-medium">
+                {banker.username}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                banker.status === 'active' 
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' 
+                  : 'text-red-400 bg-red-500/10 border-red-500/20'
+              }`}>
+                {banker.status}
+              </span>
+            </div>
+          </div>
 
-            {/* Right: stats */}
-            <div className="shrink-0 pt-10">
-              <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-                <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">Active Pardnas</p>
-                  <p className="text-white font-bold text-xl mt-0.5">{banker.activePardnas}</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">Completed</p>
-                  <p className="text-white font-bold text-xl mt-0.5">{banker.completedPardnas}</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">Member Since</p>
-                  <p className="text-white font-bold mt-0.5">{banker.memberSince}</p>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider">Overall</p>
-                  <p className="font-bold mt-0.5" style={{ color: scoreColor }}>{banker.overall}</p>
-                </div>
-              </div>
+          {/* Trust Score Ring */}
+          <div className="relative z-10 shrink-0">
+            <TrustScoreRing score={banker.trustScore} />
+          </div>
+        </div>
+
+        {/* Stats Grid (Dashboard Cards style) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-100">
+          <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+              <Activity size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Active</p>
+              <p className="text-sm font-extrabold text-slate-900 leading-none">{banker.activePardnas}</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+              <ShieldCheck size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Completed</p>
+              <p className="text-sm font-extrabold text-slate-900 leading-none">{banker.completedPardnas}</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 shrink-0">
+              <Calendar size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Joined</p>
+              <p className="text-xs font-bold text-slate-900 leading-none">{banker.memberSince}</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+              <Award size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Overall</p>
+              <span className={`text-[10px] font-extrabold rounded-full px-1.5 py-0.5 leading-none inline-block border ${ratingBadgeStyle(banker.rating)}`}>
+                {banker.overall}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* White body — 7 Signs in 2-column grid */}
-        <div className="bg-white px-8 py-6 flex-1">
-          <p className="text-[11px] font-bold tracking-widest text-amber-500 mb-5">THE 7 SIGNS OF TRUST</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-0">
-            {banker.signs.map((sign, i) => (
-              <div key={sign.label} className="flex items-start gap-3 py-3.5 border-b border-gray-100">
-                <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-[#1B2A4A]">{sign.label}</p>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <div
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{
-                          backgroundColor:
-                            sign.rating === 'Strong'
-                              ? '#10B981'
-                              : sign.rating === 'Fair'
-                                ? '#F59E0B'
-                                : '#EF4444',
-                        }}
-                      />
-                      <span
-                        className="text-xs font-semibold"
-                        style={{
-                          color:
-                            sign.rating === 'Strong'
-                              ? '#059669'
-                              : sign.rating === 'Fair'
-                                ? '#D97706'
-                                : '#EF4444',
-                        }}
-                      >
-                        {sign.rating}
-                      </span>
+        {/* Scrollable Core Content (7 Signs of Trust) */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+          <h3 className="text-xs font-bold text-orange-500 tracking-widest uppercase mb-1">
+            The 7 Signs of Trust
+          </h3>
+
+          <div className="space-y-2.5">
+            {banker.signs.map((sign, i) => {
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-4 p-3 rounded-2xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/20 transition-all duration-200"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                      {i + 1}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate leading-tight mb-0.5">{sign.label}</p>
+                      <p className="text-xs text-slate-400 truncate leading-none">{sign.desc}</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5 leading-snug">{sign.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Footer */}
-          <p className="text-center text-[10px] text-gray-400 mt-5 pt-4 border-t border-gray-100">
-            Issued by PardnaBook Admin · {new Date().toLocaleDateString('en-GB')} · Behavioural trust assessment
-          </p>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border shrink-0 flex items-center gap-1.5 ${ratingBadgeStyle(sign.rating)}`}>
+                    <span 
+                      className="w-1.5 h-1.5 rounded-full shrink-0" 
+                      style={{ backgroundColor: ratingDot(sign.rating) }}
+                    />
+                    {sign.rating}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="bg-white px-6 pb-6 flex gap-3">
+        {/* Action Footer Bar */}
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end gap-3 rounded-b-3xl">
           <button
-            onClick={() => window.print()}
-            className="flex-1 py-2.5 rounded-xl bg-[#1B2A4A] text-white text-sm font-semibold hover:bg-[#243554] transition-all cursor-pointer border-none"
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-95 transition-all outline-none shadow-sm"
           >
-            🖨️ Print
+            <Printer size={15} />
+            Print Report
           </button>
+          
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-all cursor-pointer bg-white"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all outline-none shadow-sm"
           >
-            <X size={14} className="inline mr-1" />Close
+            <X size={15} />
+            Close
           </button>
         </div>
       </div>
