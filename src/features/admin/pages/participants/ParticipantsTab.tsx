@@ -24,10 +24,10 @@ const ratingOf = (s: number): Rating =>
   s >= 88 ? 'Strong' : s >= 65 ? 'Fair' : s >= 55 ? 'Developing' : 'Weak';
 
 const ratingStyle: Record<Rating, string> = {
-  Strong:     'text-emerald-600 bg-emerald-50 border-emerald-200',
-  Fair:       'text-amber-600   bg-amber-50   border-amber-200',
+  Strong: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+  Fair: 'text-amber-600   bg-amber-50   border-amber-200',
   Developing: 'text-blue-500   bg-blue-50    border-blue-200',
-  Weak:       'text-red-500    bg-red-50     border-red-200',
+  Weak: 'text-red-500    bg-red-50     border-red-200',
 };
 
 const PAGE_SIZE = 10;
@@ -47,8 +47,8 @@ export default function ParticipantsTab({ search }: { search: string }) {
   const mapToParticipant = (apiParticipant: AdminParticipant): Participant => {
     const trustScore = apiParticipant.trustScore.compositeScore;
     // Map trust score to 0-100 range if needed, currently compositeScore is 0-10
-    const scaledTrustScore = trustScore * 10;
-    
+    const scaledTrustScore = trustScore;
+
     return {
       id: apiParticipant.id,
       name: apiParticipant.fullName,
@@ -82,6 +82,39 @@ export default function ParticipantsTab({ search }: { search: string }) {
     }
   };
 
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (page > 3) {
+        pages.push('...');
+      }
+
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+
+      if (page < totalPages - 2) {
+        pages.push('...');
+      }
+
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
     <div className="space-y-0">
       {isLoading && (
@@ -103,7 +136,7 @@ export default function ParticipantsTab({ search }: { search: string }) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    {['Name','Email','Phone','Pardnas','Trust','Rating','Status',''].map(h => (
+                    {['Name', 'Email', 'Phone', 'Pardnas', 'Trust', 'Rating', 'Status', ''].map(h => (
                       <th key={h} className="text-left text-xs font-semibold text-[var(--color-primary)] uppercase tracking-wider px-5 py-3">{h}</th>
                     ))}
                   </tr>
@@ -118,21 +151,19 @@ export default function ParticipantsTab({ search }: { search: string }) {
                       <td className="px-5 py-3.5 text-sm text-gray-500">{p.phoneNumber}</td>
                       <td className="px-5 py-3.5 text-sm text-[var(--color-dark)] font-medium">{p.pardnas}</td>
                       <td className="px-5 py-3.5">
-                        <span className={`text-sm font-bold ${
-                          p.trustScore >= 88 ? 'text-emerald-600' :
+                        <span className={`text-sm font-bold ${p.trustScore >= 88 ? 'text-emerald-600' :
                           p.trustScore >= 65 ? 'text-amber-500' :
-                          p.trustScore >= 55 ? 'text-blue-500' : 'text-red-500'
-                        }`}>{Math.round(p.trustScore)}</span>
+                            p.trustScore >= 55 ? 'text-blue-500' : 'text-red-500'
+                          }`}>{Math.round(p.trustScore)}</span>
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ratingStyle[p.rating]}`}>{p.rating}</span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                          p.status === 'active'
-                            ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
-                            : 'text-red-500 bg-red-50 border-red-200'
-                        }`}>{p.status}</span>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${p.status === 'active'
+                          ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+                          : 'text-red-500 bg-red-50 border-red-200'
+                          }`}>{p.status}</span>
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1.5">
@@ -170,19 +201,28 @@ export default function ParticipantsTab({ search }: { search: string }) {
                 <span className="font-semibold text-[var(--color-dark)]">{totalItems}</span> participants
               </p>
               <div className="flex items-center gap-2">
-                <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed">
-                  <ChevronLeft size={14}/> Previous
+                  <ChevronLeft size={14} /> Previous
                 </button>
-                {Array.from({length:totalPages},(_,i)=>i+1).map(n=>(
-                  <button key={n} onClick={()=>setPage(n)}
-                    className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${n===page?'bg-[var(--color-primary)] text-white':'text-[var(--color-gray-500)] hover:bg-gray-100'}`}>
-                    {n}
-                  </button>
-                ))}
-                <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+                {getPageNumbers().map((n, idx) => {
+                  if (n === '...') {
+                    return (
+                      <span key={`dots-${idx}`} className="px-1.5 text-xs font-semibold text-[var(--color-gray-400)] select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button key={n} onClick={() => setPage(Number(n))}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${n === page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-gray-500)] hover:bg-gray-100'}`}>
+                      {n}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed">
-                  Next <ChevronRight size={14}/>
+                  Next <ChevronRight size={14} />
                 </button>
               </div>
             </div>

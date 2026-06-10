@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Printer, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import StatsCard from '../../components/StatsCard';
 import { useGetAdminBankersQuery } from '@/store/features/adminDashboard/adminDashboardApi';
 import type { AdminBanker } from '@/store/features/adminDashboard/adminDashboardApi.types';
@@ -40,7 +41,7 @@ function TrustCard({ banker, onClose }: { banker: Banker; onClose: () => void })
   const scoreColor =
     banker.trustScore >= 88 ? '#10B981' : banker.trustScore >= 75 ? '#F59E0B' : '#EF4444';
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[999] flex items-center justify-center"
       style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
@@ -174,7 +175,8 @@ function TrustCard({ banker, onClose }: { banker: Banker; onClose: () => void })
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

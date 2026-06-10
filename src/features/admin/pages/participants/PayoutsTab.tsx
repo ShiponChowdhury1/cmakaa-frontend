@@ -80,6 +80,39 @@ export default function PayoutsTab({ search }: { search: string }) {
     );
   }
 
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      
+      if (page > 3) {
+        pages.push('...');
+      }
+      
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+      
+      if (page < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary cards */}
@@ -149,12 +182,21 @@ export default function PayoutsTab({ search }: { search: string }) {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed">
               <ChevronLeft size={14}/> Previous
             </button>
-            {Array.from({length:totalPages},(_,i)=>i+1).map(n=>(
-              <button key={n} onClick={()=>setPage(n)}
-                className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${n===page?'bg-[var(--color-primary)] text-white':'text-[var(--color-gray-500)] hover:bg-gray-100'}`}>
-                {n}
-              </button>
-            ))}
+            {getPageNumbers().map((n, idx) => {
+              if (n === '...') {
+                return (
+                  <span key={`dots-${idx}`} className="px-1.5 text-xs font-semibold text-[var(--color-gray-400)] select-none">
+                    ...
+                  </span>
+                );
+              }
+              return (
+                <button key={n} onClick={()=>setPage(Number(n))}
+                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${n===page?'bg-[var(--color-primary)] text-white':'text-[var(--color-gray-500)] hover:bg-gray-100'}`}>
+                  {n}
+                </button>
+              );
+            })}
             <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed">
               Next <ChevronRight size={14}/>
