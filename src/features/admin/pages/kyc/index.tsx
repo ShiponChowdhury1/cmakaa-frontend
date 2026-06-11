@@ -443,9 +443,6 @@ export default function KycReviewPage() {
                     {activeViewingKyc.status}
                   </span>
                 </h3>
-                <p className="text-xs text-[var(--color-gray-400)] mt-0.5">
-                  Application ID: {activeViewingKyc.id}
-                </p>
               </div>
               <button
                 onClick={() => {

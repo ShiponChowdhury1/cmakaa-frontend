@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Search, ChevronLeft, ChevronRight, Users, Landmark, RefreshCw, Calendar, DollarSign, Clock, Mail, User, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import StatsCard from '../../components/StatsCard';
 import { useGetAdminPardnasQuery } from '@/store/features/adminDashboard/adminDashboardApi';
@@ -251,76 +251,144 @@ export default function AllPardnasPage() {
 
       {selectedPardna && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/40 p-4 sm:p-6 flex items-center justify-center"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in"
           onClick={() => setSelectedPardna(null)}
         >
           <div
-            className="w-full max-w-2xl bg-white rounded-xl border border-gray-100 shadow-xl overflow-hidden"
+            className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
-              <div>
-                <h3 className="text-base font-bold text-[var(--color-dark)]">Pardna Details</h3>
-                <p className="text-xs text-[var(--color-gray-400)] mt-0.5">{selectedPardna.id}</p>
-              </div>
-              <button
-                onClick={() => setSelectedPardna(null)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-gray-500)] hover:text-[var(--color-dark)] hover:bg-gray-100 transition-all border-none bg-transparent cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+            {/* Header (Dark Premium Panel) */}
+            <div className="bg-slate-900 px-6 py-6 text-white flex items-center justify-between relative overflow-hidden">
+              {/* Subtle pattern */}
+              <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:14px_14px]"></div>
 
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Name</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardna.name}</p>
+              <div className="relative z-10 flex-1 min-w-0 pr-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-md bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs">
+                    P
+                  </div>
+                  <span className="text-xs font-bold tracking-widest text-orange-400 uppercase">
+                    Pardna Details
+                  </span>
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight truncate leading-tight mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+                  {selectedPardna.name}
+                </h2>
+                <p className="text-xs text-slate-400 font-mono">
+                  ID: {selectedPardna.id}
+                </p>
               </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Status</p>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${statusStyle[selectedPardna.status] ?? 'text-gray-500 bg-gray-100 border-gray-300'}`}>
+              <div className="relative z-10 shrink-0">
+                <span className={`text-xs font-bold px-3 py-1 rounded-full border shadow-sm ${
+                  selectedPardna.status === 'ACTIVE' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                  selectedPardna.status === 'COMPLETED' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                  selectedPardna.status === 'PAUSED' ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' :
+                  'text-slate-400 bg-slate-500/10 border-slate-500/20'
+                }`}>
                   {selectedPardna.status.toLowerCase()}
                 </span>
               </div>
+            </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Contribution</p>
-                <p className="font-semibold text-[var(--color-dark)]">£{Number(selectedPardna.contribution).toLocaleString()}</p>
+            {/* Stats Dashboard Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border-b border-slate-100">
+              <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
+                  <DollarSign size={16} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Contribution</p>
+                  <p className="text-sm font-extrabold text-slate-900 leading-none">£{Number(selectedPardna.contribution).toLocaleString()}</p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Frequency</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardna.frequency.toLowerCase()}</p>
+              <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Frequency</p>
+                  <p className="text-sm font-extrabold text-slate-900 leading-none capitalize">{selectedPardna.frequency.toLowerCase()}</p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Current Round</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardna.currentRound}</p>
+              <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 shrink-0">
+                  <RefreshCw size={16} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Cycle Progress</p>
+                  <p className="text-xs font-bold text-slate-900 leading-none">Round {selectedPardna.currentRound} / {selectedPardna.totalRounds}</p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Total Rounds</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardna.totalRounds}</p>
+              <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+                  <Users size={16} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">Participants</p>
+                  <p className="text-sm font-extrabold text-slate-900 leading-none">{selectedPardna._count.participants}</p>
+                </div>
               </div>
+            </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Participants</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardna._count.participants}</p>
-              </div>
+            {/* Core details */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Pardna Details Card */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3.5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Landmark size={14} className="text-slate-400" /> Pardna Info
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-xs text-slate-400">Created Date</span>
+                      <p className="font-semibold text-slate-800 mt-0.5">{selectedPardnaDate}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400">Cycle Configuration</span>
+                      <p className="font-semibold text-slate-800 mt-0.5 capitalize">
+                        {selectedPardna.frequency.toLowerCase()} payouts · {selectedPardna.totalRounds} rounds
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Created At</p>
-                <p className="font-semibold text-[var(--color-dark)]">{selectedPardnaDate}</p>
+                {/* Banker Details Card */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3.5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <User size={14} className="text-slate-400" /> Assigned Banker
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-xs text-slate-400">Full Name</span>
+                      <p className="font-semibold text-slate-800 mt-0.5">
+                        {`${selectedPardna.banker.firstName} ${selectedPardna.banker.lastName}`.trim()}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400">Email Address</span>
+                      <p className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1.5">
+                        <Mail size={12} className="text-slate-400" /> {selectedPardna.banker.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div className="sm:col-span-2">
-                <p className="text-xs text-[var(--color-gray-400)] mb-1">Banker</p>
-                <p className="font-semibold text-[var(--color-dark)]">
-                  {`${selectedPardna.banker.firstName} ${selectedPardna.banker.lastName}`.trim()}
-                </p>
-                <p className="text-xs text-[var(--color-gray-400)] mt-0.5">{selectedPardna.banker.email}</p>
-              </div>
+            {/* Actions Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex items-center justify-end rounded-b-3xl">
+              <button
+                onClick={() => setSelectedPardna(null)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer border-none bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all outline-none shadow-sm"
+              >
+                <X size={15} />
+                Close
+              </button>
             </div>
           </div>
         </div>,

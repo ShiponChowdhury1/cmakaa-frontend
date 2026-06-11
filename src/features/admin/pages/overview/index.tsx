@@ -1,6 +1,6 @@
 import StatsCard from '../../components/StatsCard';
 import ActivityItem from '../../components/ActivityItem';
-import { useGetAdminPlatformStatsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
+import { useGetAdminPlatformStatsQuery, useGetAdminAuditLogsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
 import PardnaStatusPieChart from '../../components/charts/PardnaStatusPieChart';
 import MonthlyCollectionsBarChart from '../../components/charts/MonthlyCollectionsBarChart';
 import UserGrowthLineChart from '../../components/charts/UserGrowthLineChart';
@@ -92,12 +92,7 @@ const statsRow2Base = [
   },
 ];
 
-const recentActivity = [
-  { type: 'payment' as const, title: 'Sarah J. Recorded payment', description: 'Family Monthly → Grace M.', time: '04:12' },
-  { type: 'status' as const, title: 'System. Marked payment overdue', description: 'Community Build → Participant #4', time: '03:45' },
-  { type: 'admin' as const, title: 'Admin. Suspended user', description: 'James King', time: '12:30' },
-  { type: 'recycle' as const, title: 'Mike T. Completed cycle', description: 'Summer Holiday Fund', time: '10:00' },
-];
+
 
 const topPerformingPardnas = [
   { name: 'Family Monthly', score: 98, amount: '£12,400' },
@@ -108,7 +103,9 @@ const topPerformingPardnas = [
 
 export default function OverviewPage() {
   const { data: response, isLoading: isStatsLoading } = useGetAdminPlatformStatsQuery();
+  const { data: logsResponse } = useGetAdminAuditLogsQuery({ limit: 5 });
   const stats = response?.data ?? null;
+  const logs = logsResponse?.data ?? [];
 
   const statsRow1 = [
     { ...statsRow1Base[0], value: stats?.totalBankers ?? 0 },
@@ -183,10 +180,53 @@ export default function OverviewPage() {
       {/* Recent Activity */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
         <h3 className="text-sm font-semibold text-[var(--color-dark)] mb-4">Recent Activity</h3>
-        <div>
-          {recentActivity.map((a, i) => (
-            <ActivityItem key={i} {...a} />
-          ))}
+        <div className="space-y-1">
+          {logs.length === 0 ? (
+            <p className="text-xs text-[var(--color-gray-400)] py-2">No recent activity found.</p>
+          ) : (
+            logs.map((log) => {
+              const actorName = log.actor ? `${log.actor.firstName || ''} ${log.actor.lastName || ''}`.trim() || log.actor.email : 'System';
+              let type: 'payment' | 'status' | 'admin' | 'recycle' = 'recycle';
+              const actionLower = log.action.toLowerCase();
+              if (actionLower.includes('payment') || actionLower.includes('payout')) {
+                type = 'payment';
+              } else if (actionLower.includes('status') || actionLower.includes('suspend')) {
+                type = 'status';
+              } else if (actionLower.includes('kyc') || actionLower.includes('admin') || actionLower.includes('user') || actionLower.includes('banker')) {
+                type = 'admin';
+              }
+              const actionTitle = log.action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+              const title = `${actorName}. ${actionTitle}`;
+              let description = `Performed action on ${log.entityType.toLowerCase()}`;
+              if (actionLower.includes('approve') && actionLower.includes('kyc')) {
+                description = 'Approved user KYC application';
+              } else if (actionLower.includes('decline') && actionLower.includes('kyc')) {
+                description = 'Declined user KYC application';
+              } else if (actionLower.includes('create') && actionLower.includes('pardna')) {
+                description = 'Created a new Pardna group';
+              } else if (actionLower.includes('update') && actionLower.includes('pardna')) {
+                description = 'Updated Pardna configuration';
+              } else if (actionLower.includes('record') && actionLower.includes('payment')) {
+                description = 'Recorded a participant contribution';
+              } else if (actionLower.includes('confirm') && actionLower.includes('payout')) {
+                description = 'Confirmed a payout dispatch';
+              } else if (actionLower.includes('suspend') && actionLower.includes('banker')) {
+                description = 'Suspended banker profile';
+              } else if (actionLower.includes('activate') && actionLower.includes('banker')) {
+                description = 'Activated banker profile';
+              }
+              const time = new Date(log.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+              return (
+                <ActivityItem
+                  key={log.id}
+                  type={type}
+                  title={title}
+                  description={description}
+                  time={time}
+                />
+              );
+            })
+          )}
         </div>
       </div>
     </div>
