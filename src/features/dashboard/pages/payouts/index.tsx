@@ -26,6 +26,10 @@ export default function PayoutsPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'confirmed'>('all');
   const [confirmingPayoutId, setConfirmingPayoutId] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Calculate statistics
   const confirmedPayouts = payouts.filter((p) => p.status === 'CONFIRMED');
@@ -61,11 +65,34 @@ export default function PayoutsPage() {
       .slice(0, 2) || 'P';
   };
 
+  const handleTabChange = (tab: 'all' | 'pending' | 'confirmed') => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
   const filteredPayouts = payouts.filter((p) => {
     if (activeTab === 'pending') return p.status === 'PENDING';
     if (activeTab === 'confirmed') return p.status === 'CONFIRMED';
     return true;
   });
+
+  const totalItems = filteredPayouts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const getPageNumbers = () => {
+    const windowSize = 3;
+    const chunkStart = Math.floor((safeCurrentPage - 1) / windowSize) * windowSize + 1;
+    const chunkEnd = Math.min(chunkStart + windowSize - 1, totalPages);
+    const pages: number[] = [];
+    for (let i = chunkStart; i <= chunkEnd; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+  
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+  const paginatedPayouts = filteredPayouts.slice(startIndex, startIndex + itemsPerPage);
 
   if (isLoading) {
     return (
@@ -158,7 +185,7 @@ export default function PayoutsPage() {
         {(['all', 'pending', 'confirmed'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className="px-4 py-2.5 text-sm font-semibold capitalize cursor-pointer transition-all border-b-2 -mb-px shrink-0"
             style={{
               borderColor: activeTab === tab ? '#E57432' : 'transparent',
@@ -179,7 +206,7 @@ export default function PayoutsPage() {
             <p className="text-xs text-gray-400 mt-1">There are no payouts in the "{activeTab}" filter.</p>
           </div>
         ) : (
-          filteredPayouts.map((payout) => {
+          paginatedPayouts.map((payout) => {
             const isCompleted = payout.status === 'CONFIRMED';
             const isExpanding = confirmingPayoutId === payout.id;
 
@@ -243,9 +270,9 @@ export default function PayoutsPage() {
                           {!isExpanding && (
                             <button
                               onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmingPayoutId(payout.id);
-                                setNotes('');
+                                  e.stopPropagation();
+                                  setConfirmingPayoutId(payout.id);
+                                  setNotes('');
                               }}
                               className="px-3 py-1.5 rounded-lg text-white font-semibold text-xs cursor-pointer border-none transition-opacity hover:opacity-90"
                               style={{ background: '#16A34A' }}
@@ -326,6 +353,41 @@ export default function PayoutsPage() {
               </div>
             );
           })
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-1.5 sm:gap-2 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safeCurrentPage === 1}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1.5">
+              {getPageNumbers().map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setCurrentPage(n)}
+                  className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl text-xs font-bold transition-all border-none cursor-pointer ${
+                    safeCurrentPage === n
+                      ? 'bg-[#E57432] text-white shadow-md shadow-orange-500/20'
+                      : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
         )}
       </div>
     </div>

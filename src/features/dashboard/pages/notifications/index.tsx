@@ -14,8 +14,6 @@ import {
   AlertCircle,
   Lock,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
   Check
 } from 'lucide-react';
 
@@ -137,16 +135,12 @@ export default function NotificationsPage() {
   const getPageNumbers = () => {
     if (!pagination) return [];
     const totalPages = pagination.totalPages;
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    const pages: (number | string)[] = [];
-    if (page <= 3) {
-      pages.push(1, 2, 3, 4, '...', totalPages);
-    } else if (page >= totalPages - 2) {
-      pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-    } else {
-      pages.push(1, '...', page - 1, page, page + 1, '...', totalPages);
+    const windowSize = 3;
+    const chunkStart = Math.floor((page - 1) / windowSize) * windowSize + 1;
+    const chunkEnd = Math.min(chunkStart + windowSize - 1, totalPages);
+    const pages: number[] = [];
+    for (let i = chunkStart; i <= chunkEnd; i++) {
+      pages.push(i);
     }
     return pages;
   };
@@ -289,55 +283,38 @@ export default function NotificationsPage() {
 
       {/* ── Pagination ──────────────────────────────── */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-4 px-2">
-          <p className="text-xs text-gray-500 text-center sm:text-left">
-            Showing <span className="font-semibold text-gray-700">{(page - 1) * 10 + 1}</span> to{' '}
-            <span className="font-semibold text-gray-700">
-              {Math.min(page * 10, pagination.total)}
-            </span>{' '}
-            of <span className="font-semibold text-gray-700">{pagination.total}</span> notifications
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" /> Previous
-            </button>
-            
-            {getPageNumbers().map((pNum, idx) => {
-              if (pNum === '...') {
-                return (
-                  <span key={`dots-${idx}`} className="px-1 text-xs font-semibold text-gray-400 select-none">
-                    ...
-                  </span>
-                );
-              }
-              return (
-                <button
-                  key={pNum}
-                  onClick={() => setPage(Number(pNum))}
-                  className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none"
-                  style={{
-                    background: page === pNum ? '#E57432' : 'transparent',
-                    color: page === pNum ? 'white' : '#475569',
-                  }}
-                >
-                  {pNum}
-                </button>
-              );
-            })}
-
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
-              disabled={page === pagination.totalPages}
-              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 pt-4 border-t border-gray-100">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+          >
+            Previous
+          </button>
+          
+          <div className="flex items-center gap-1.5">
+            {getPageNumbers().map((pNum) => (
+              <button
+                key={pNum}
+                onClick={() => setPage(pNum)}
+                className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl text-xs font-bold transition-all border-none cursor-pointer ${
+                  page === pNum
+                    ? 'bg-[#E57432] text-white shadow-md shadow-orange-500/20'
+                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                {pNum}
+              </button>
+            ))}
           </div>
+
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
+            disabled={page === pagination.totalPages}
+            className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

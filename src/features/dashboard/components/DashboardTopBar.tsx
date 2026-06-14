@@ -6,13 +6,15 @@ import { logout } from '@/store/features/auth/authSlice';
 import { useServerLogoutMutation } from '@/store/features/auth/authApi';
 import { baseApi } from '@/store/api/baseApi';
 
+import { Home, BookOpen, CreditCard, DollarSign, Bell, User } from 'lucide-react';
+
 const tabs = [
-  { label: 'Home',          path: '/dashboard' },
-  { label: 'Diary',         path: '/dashboard/diary' },
-  { label: 'Payments',      path: '/dashboard/payments' },
-  { label: 'Payouts',       path: '/dashboard/payouts' },
-  { label: 'Notifications', path: '/dashboard/notifications' },
-  { label: 'Profile',       path: '/dashboard/profile' },
+  { label: 'Home',          path: '/dashboard',              icon: Home },
+  { label: 'Diary',         path: '/dashboard/diary',        icon: BookOpen },
+  { label: 'Payments',      path: '/dashboard/payments',     icon: CreditCard },
+  { label: 'Payouts',       path: '/dashboard/payouts',      icon: DollarSign },
+  { label: 'Notifications', path: '/dashboard/notifications', icon: Bell },
+  { label: 'Profile',       path: '/dashboard/profile',      icon: User },
 ];
 
 export default function DashboardTopBar() {
@@ -100,8 +102,8 @@ export default function DashboardTopBar() {
             </div>
           </div>
 
-          {/* Row 3: Tabs */}
-          <nav className="flex items-center gap-0 overflow-x-auto px-3 sm:px-5 scrollbar-hide">
+          {/* Row 3: Tabs (Desktop only) */}
+          <nav className="hidden sm:flex items-center gap-0 overflow-x-auto px-3 sm:px-5 scrollbar-hide">
             {tabs.map((tab) => (
               <NavLink
                 key={tab.path}
@@ -124,6 +126,29 @@ export default function DashboardTopBar() {
           </div>
         </div>
       </header>
+
+      {/* Bottom Navigation Bar (Mobile only) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] px-2 pb-[env(safe-area-inset-bottom)] sm:hidden flex items-center justify-around h-16">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.path === '/dashboard'}
+              className={({ isActive }) =>
+                cn(
+                  'flex flex-col items-center justify-center flex-1 py-1 px-1.5 no-underline transition-all duration-200 select-none',
+                  isActive ? 'text-[#E57432]' : 'text-gray-400 hover:text-gray-600'
+                )
+              }
+            >
+              <Icon size={18} className="mb-0.5" />
+              <span className="text-[9px] font-semibold tracking-wide">{tab.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
 
       {/* Logout Modal */}
       {showLogoutModal && (

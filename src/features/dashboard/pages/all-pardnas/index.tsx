@@ -25,6 +25,10 @@ export default function AllPardnasPage() {
   const { data: pardnasList = [], isLoading } = useGetPardnasQuery();
   const [filter, setFilter] = useState<FilterTab>('all');
   const [search, setSearch] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const filtered = useMemo(() => {
     let list = pardnasList;
@@ -41,6 +45,26 @@ export default function AllPardnasPage() {
     }
     return list;
   }, [pardnasList, filter, search]);
+
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const getPageNumbers = () => {
+    const windowSize = 3;
+    const chunkStart = Math.floor((safeCurrentPage - 1) / windowSize) * windowSize + 1;
+    const chunkEnd = Math.min(chunkStart + windowSize - 1, totalPages);
+    const pages: number[] = [];
+    for (let i = chunkStart; i <= chunkEnd; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const paginatedPardnas = filtered.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    (safeCurrentPage - 1) * itemsPerPage + itemsPerPage
+  );
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: pardnasList.length },
@@ -99,7 +123,10 @@ export default function AllPardnasPage() {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           placeholder="Search pardnas by name..."
           className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[var(--color-dark)] placeholder:text-[#94A3B8] outline-none focus:border-[#E57432] transition-colors"
         />
@@ -110,7 +137,10 @@ export default function AllPardnasPage() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setFilter(tab.key)}
+            onClick={() => {
+              setFilter(tab.key);
+              setCurrentPage(1);
+            }}
             className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer border transition-all whitespace-nowrap ${
               filter === tab.key
                 ? 'bg-[#E57432] text-white border-[#E57432]'
@@ -124,109 +154,146 @@ export default function AllPardnasPage() {
 
       {/* Pardnas grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filtered.map((p) => {
-            const completedRounds = p.rounds?.filter((r) => r.status === 'COMPLETED').length || 0;
-            const collected = `${completedRounds}/${p.totalRounds || 0}`;
-            const nextRound = p.rounds?.find((r) => r.status === 'ACTIVE' || r.status === 'UPCOMING');
-            const nextPayout = nextRound ? format(new Date(nextRound.payoutDate), 'd MMM') : '—';
-            const statusKey = (p.status?.toLowerCase() as PardnaStatus) || 'active';
-            const totalPot = Number(p.contribution) * (p.participants?.length || 0);
-            const progress = p.totalRounds ? (completedRounds / p.totalRounds) * 100 : 0;
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {paginatedPardnas.map((p) => {
+              const completedRounds = p.rounds?.filter((r) => r.status === 'COMPLETED').length || 0;
+              const collected = `${completedRounds}/${p.totalRounds || 0}`;
+              const nextRound = p.rounds?.find((r) => r.status === 'ACTIVE' || r.status === 'UPCOMING');
+              const nextPayout = nextRound ? format(new Date(nextRound.payoutDate), 'd MMM') : '—';
+              const statusKey = (p.status?.toLowerCase() as PardnaStatus) || 'active';
+              const totalPot = Number(p.contribution) * (p.participants?.length || 0);
+              const progress = p.totalRounds ? (completedRounds / p.totalRounds) * 100 : 0;
 
-            return (
-              <div
-                key={p.id}
-                className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
-                onClick={() => navigate(`/dashboard/pardnas/${p.id}`)}
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => navigate(`/dashboard/pardnas/${p.id}`)}
+                >
+                  {/* Top row */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot[statusKey] || 'bg-gray-400'}`} />
+                        <p className="text-sm font-bold text-[var(--color-dark)] truncate">{p.name}</p>
+                      </div>
+                      <p className="text-xs text-[#64748B] truncate">{p.description || 'No description'}</p>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full capitalize shrink-0 ml-2 ${statusStyle[statusKey] || 'text-gray-500 bg-gray-100'}`}>
+                      {statusKey}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between text-[10px] font-medium text-[#94A3B8] mb-1">
+                      <span>Progress</span>
+                      <span>{progress.toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${progress}%`,
+                          background: 'linear-gradient(90deg, #E57432, #F4A261)',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-orange-50 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E57432" strokeWidth="2.5">
+                          <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#94A3B8]">Per Round</p>
+                        <p className="font-bold text-[var(--color-dark)]">£{Number(p.contribution).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5">
+                          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#94A3B8]">Members</p>
+                        <p className="font-bold text-[var(--color-dark)]">{p.participants?.length || 0}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#94A3B8]">Rounds</p>
+                        <p className="font-bold text-[var(--color-dark)]">{collected}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center shrink-0">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5">
+                          <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#94A3B8]">Next Payout</p>
+                        <p className="font-bold text-[var(--color-dark)]">{nextPayout}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total pot footer */}
+                  <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">Total Pot</span>
+                    <span className="text-sm font-bold text-[#E57432]">£{totalPot.toLocaleString()}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
               >
-                {/* Top row */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot[statusKey] || 'bg-gray-400'}`} />
-                      <p className="text-sm font-bold text-[var(--color-dark)] truncate">{p.name}</p>
-                    </div>
-                    <p className="text-xs text-[#64748B] truncate">{p.description || 'No description'}</p>
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2.5 py-1 rounded-full capitalize shrink-0 ml-2 ${statusStyle[statusKey] || 'text-gray-500 bg-gray-100'}`}>
-                    {statusKey}
-                  </span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mb-3">
-                  <div className="flex justify-between text-[10px] font-medium text-[#94A3B8] mb-1">
-                    <span>Progress</span>
-                    <span>{progress.toFixed(0)}%</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${progress}%`,
-                        background: 'linear-gradient(90deg, #E57432, #F4A261)',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-orange-50 flex items-center justify-center shrink-0">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E57432" strokeWidth="2.5">
-                        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#94A3B8]">Per Round</p>
-                      <p className="font-bold text-[var(--color-dark)]">£{Number(p.contribution).toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5">
-                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" /><circle cx="9" cy="7" r="4" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#94A3B8]">Members</p>
-                      <p className="font-bold text-[var(--color-dark)]">{p.participants?.length || 0}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-emerald-50 flex items-center justify-center shrink-0">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
-                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#94A3B8]">Rounds</p>
-                      <p className="font-bold text-[var(--color-dark)]">{collected}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center shrink-0">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5">
-                        <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#94A3B8]">Next Payout</p>
-                      <p className="font-bold text-[var(--color-dark)]">{nextPayout}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total pot footer */}
-                <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">Total Pot</span>
-                  <span className="text-sm font-bold text-[#E57432]">£{totalPot.toLocaleString()}</span>
-                </div>
+                Previous
+              </button>
+              <div className="flex items-center gap-1.5">
+                {getPageNumbers().map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setCurrentPage(n)}
+                    className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl text-xs font-bold transition-all border-none cursor-pointer ${
+                      safeCurrentPage === n
+                        ? 'bg-[#E57432] text-white shadow-md shadow-orange-500/20'
+                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
               </div>
-            );
-          })}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm cursor-pointer"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">

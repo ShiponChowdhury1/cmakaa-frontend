@@ -8,7 +8,7 @@ import {
   useConfirmPayoutMutation,
 } from '@/store/features/createPardna/createPardna.api';
 import { format } from 'date-fns';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Coins, Users, Calendar, ClipboardList, Plus } from 'lucide-react';
 
 /* ─── Status Config ─────────────────────────────────── */
 
@@ -239,22 +239,25 @@ export default function PaymentsPage() {
           {/* ── Summary Cards ───────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { icon: '💰', value: `£${contribution.toLocaleString()}`, label: 'Per round', iconBg: '#FFFBEB' },
-              { icon: '👥', value: String(numParticipants), label: 'Participants', iconBg: '#EFF6FF' },
-              { icon: '🗓', value: `${roundsCompleted}/${totalRounds}`, label: 'Rounds done', iconBg: '#F0FDF4' },
-            ].map((c) => (
-              <div key={c.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm mb-0 sm:mb-2 shrink-0" style={{ background: c.iconBg }}>
-                  {c.icon}
+              { icon: Coins, value: `£${contribution.toLocaleString()}`, label: 'Per round', iconBg: '#FFFBEB', iconColor: '#D97706' },
+              { icon: Users, value: String(numParticipants), label: 'Participants', iconBg: '#EFF6FF', iconColor: '#2563EB' },
+              { icon: Calendar, value: `${roundsCompleted}/${totalRounds}`, label: 'Rounds done', iconBg: '#F0FDF4', iconColor: '#16A34A' },
+            ].map((c) => {
+              const Icon = c.icon;
+              return (
+                <div key={c.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-0 sm:mb-2 shrink-0" style={{ background: c.iconBg, color: c.iconColor }}>
+                    <Icon size={18} />
+                  </div>
+                  <div>
+                    <p className="text-2xl sm:text-3xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
+                      {c.value}
+                    </p>
+                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 sm:mt-1">{c.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                    {c.value}
-                  </p>
-                  <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 sm:mt-1">{c.label}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* ── Cycle Progress ──────────────────────────── */}
@@ -283,17 +286,19 @@ export default function PaymentsPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => openRecordModal()}
-                className="flex-1 py-3 rounded-xl text-white font-semibold text-sm cursor-pointer border-none transition-opacity hover:opacity-90"
+                className="flex-1 py-3 rounded-xl text-white font-semibold text-sm cursor-pointer border-none transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
                 style={{ background: '#E57432' }}
               >
-                + Record Payment
+                <Plus className="w-4 h-4 text-white" />
+                <span>Record Payment</span>
               </button>
               <button
                 onClick={() => handleSectionChange('payout')}
-                className="flex-1 py-3 rounded-xl font-semibold text-sm cursor-pointer border border-gray-200 transition-colors hover:border-gray-300"
+                className="flex-1 py-3 rounded-xl font-semibold text-sm cursor-pointer border border-gray-200 transition-colors hover:border-gray-300 flex items-center justify-center gap-2"
                 style={{ background: '#F3F4F6', color: 'var(--color-dark)' }}
               >
-                📋 Manage Payouts
+                <ClipboardList className="w-4 h-4 text-gray-500" />
+                <span>Manage Payouts</span>
               </button>
             </div>
           </section>
