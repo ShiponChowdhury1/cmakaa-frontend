@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Shield } from 'lucide-react';
 import navbarLogo from '@/assets/logos/navbarLogo.svg';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { logout } from '@/store/features/auth/authSlice';
@@ -146,6 +146,16 @@ export default function Navbar() {
                       <User size={16} />
                       Dashboard
                     </Link>
+                    {user?.role === 'ADMIN' && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--color-gray-500)] hover:bg-[var(--color-gray-100)] hover:text-[var(--color-dark)] transition-colors no-underline"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <Shield size={16} />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors w-full border-none bg-transparent cursor-pointer text-left"

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { BarChart, Bar, XAxis, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
 type MonthlyItem = { month: string; amount: number };
@@ -57,28 +56,30 @@ export default function MonthlyCollectionsBarChart({ data }: Props) {
       </div>
 
       {/* Chart */}
-      <BarChart
-        style={{ width: '100%', aspectRatio: 2.8 }}
-        responsive
-        data={series.length ? series : [{ month: '—', collected: 0 }]}
-        margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
-      >
-        <XAxis
-          dataKey="month"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#9CA3AF', fontSize: 12 }}
-        />
-        <defs>
-          <linearGradient id="monthly-collections-grad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#E57432" />
-            <stop offset="100%" stopColor="#FF9C65" />
-          </linearGradient>
-        </defs>
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(229,116,50,0.08)', radius: 6 }} />
-        <Bar dataKey="collected" fill="url(#monthly-collections-grad)" radius={[6, 6, 0, 0]} maxBarSize={40} />
-        <RechartsDevtools />
-      </BarChart>
+      <div className="w-full h-56 sm:h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={series.length ? series : [{ month: '—', collected: 0 }]}
+            margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
+          >
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+            />
+            <defs>
+              <linearGradient id="monthly-collections-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#E57432" />
+                <stop offset="100%" stopColor="#FF9C65" />
+              </linearGradient>
+            </defs>
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(229,116,50,0.08)', radius: 6 }} />
+            <Bar dataKey="collected" fill="url(#monthly-collections-grad)" radius={[6, 6, 0, 0]} maxBarSize={40} />
+            <RechartsDevtools />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

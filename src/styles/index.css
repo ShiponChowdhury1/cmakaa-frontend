@@ -97,18 +97,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Scrollbar styling ── */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-300) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-gray-300);
-  border-radius: 3px;
+  border-radius: 9999px;
+  transition: background-color var(--transition-fast);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-400);
+  background: var(--color-primary);
 }
 
 /* ── Global Focus Resets ── */

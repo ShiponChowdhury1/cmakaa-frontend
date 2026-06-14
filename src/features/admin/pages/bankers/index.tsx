@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Printer, ChevronLeft, ChevronRight, Search, X, Calendar, ShieldCheck, Activity, Award } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import StatsCard from '../../components/StatsCard';
 import { useGetAdminBankersQuery } from '@/store/features/adminDashboard/adminDashboardApi';
 import type { AdminBanker } from '@/store/features/adminDashboard/adminDashboardApi.types';
+import { isDateWithinDays } from '@/utils/dateFilter';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -585,7 +587,11 @@ export default function BankersPage() {
     };
   };
 
-  const bankers = response?.data.map(mapToBanker) ?? [];
+  const { daysFilter } = useOutletContext<{ daysFilter: string }>();
+
+  const rawBankers = response?.data ?? [];
+  const filteredRawBankers = rawBankers.filter(b => isDateWithinDays(b.createdAt, daysFilter, rawBankers.map(x => x.createdAt)));
+  const bankers = filteredRawBankers.map(mapToBanker);
   const totalPages = response?.meta.pagination.totalPages ?? 1;
   const statsData = response?.meta.status ?? { active: 0, suspended: 0, total: 0 };
 
@@ -656,24 +662,6 @@ export default function BankersPage() {
         </svg>
       ),
     },
-    {
-      label: 'Avg Trust Score',
-      value: bankers.length > 0 ? String(Math.round(bankers.reduce((s, b) => s + b.trustScore, 0) / bankers.length)) : '0',
-      iconBg: 'bg-gray-100',
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#6B7280"
-          strokeWidth="2"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v-4M12 8h.01" />
-        </svg>
-      ),
-    },
   ];
 
   return (
@@ -691,7 +679,7 @@ export default function BankersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         {stats.map((s) => <StatsCard key={s.label} {...s} />)}
       </div>
 
@@ -727,14 +715,13 @@ export default function BankersPage() {
       {/* Table */}
       {!isLoading && !error && (
         <>
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-xl border border-gray-100 overflow-x-auto">
+            <table className="w-full min-w-[850px]">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr className="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Email</th>
                   <th className="px-6 py-3">Pardnas</th>
-                  <th className="px-6 py-3">Trust Score</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Member Since</th>
                   <th className="px-6 py-3 text-right">Actions</th>
@@ -743,7 +730,7 @@ export default function BankersPage() {
               <tbody className="divide-y divide-gray-100">
                 {bankers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       No bankers found
                     </td>
                   </tr>
@@ -757,24 +744,6 @@ export default function BankersPage() {
                       <td className="px-6 py-4 text-gray-500">{banker.username}</td>
                       <td className="px-6 py-4 font-semibold text-orange-600">
                         {banker.pardnas}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white"
-                            style={{
-                              backgroundColor:
-                                banker.rating === 'Strong'
-                                  ? '#10B981'
-                                  : banker.rating === 'Fair'
-                                    ? '#F59E0B'
-                                    : '#EF4444',
-                            }}
-                          >
-                            {banker.trustScore}
-                          </div>
-                          <span className="text-xs font-semibold">{banker.rating}</span>
-                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -808,22 +777,22 @@ export default function BankersPage() {
 
           {/* Pagination */}
           {bankers.length > 0 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+              <p className="text-sm text-gray-500 text-center sm:text-left">
                 Page {page} of {totalPages}
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-white cursor-pointer"
                 >
                   <ChevronLeft size={16} /> Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all bg-white cursor-pointer"
                 >
                   Next <ChevronRight size={16} />
                 </button>

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useSignupBankerMutation } from '@/store/features/auth/authApi';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const trustPoints = [
   'No money handling — records only',
@@ -206,13 +208,12 @@ export default function RegisterPage() {
             >
               Phone number
             </label>
-            <input
-              id="phone"
-              type="tel"
-              placeholder="+44 7700 900000"
+            <PhoneInput
+              placeholder="Enter phone number"
               value={form.phone}
-              onChange={(e) => set('phone', e.target.value)}
-              className={`${inputClass} ${errors.phone ? 'border-[var(--color-error)]' : ''}`}
+              onChange={(val) => set('phone', val || '')}
+              defaultCountry="GB"
+              className={`custom-phone-input ${errors.phone ? '!border-[var(--color-error)]' : ''}`}
             />
             {errors.phone && (
               <p className="mt-2 text-xs text-[var(--color-error)]">{errors.phone}</p>

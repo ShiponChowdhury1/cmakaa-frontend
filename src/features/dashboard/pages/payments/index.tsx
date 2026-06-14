@@ -220,7 +220,7 @@ export default function PaymentsPage() {
       ) : (
         <>
           {/* ── Stats Row ───────────────────────────────── */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Paid', value: paidCount, color: '#16A34A' },
               { label: 'Pending', value: pendingCount, color: '#1B2A4A' },
@@ -237,20 +237,22 @@ export default function PaymentsPage() {
           </div>
 
           {/* ── Summary Cards ───────────────────────────── */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { icon: '💰', value: `£${contribution.toLocaleString()}`, label: 'Per round', iconBg: '#FFFBEB' },
               { icon: '👥', value: String(numParticipants), label: 'Participants', iconBg: '#EFF6FF' },
               { icon: '🗓', value: `${roundsCompleted}/${totalRounds}`, label: 'Rounds done', iconBg: '#F0FDF4' },
             ].map((c) => (
-              <div key={c.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm mb-2" style={{ background: c.iconBg }}>
+              <div key={c.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-sm mb-0 sm:mb-2 shrink-0" style={{ background: c.iconBg }}>
                   {c.icon}
                 </div>
-                <p className="text-3xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                  {c.value}
-                </p>
-                <p className="text-sm text-[#64748B] mt-1">{c.label}</p>
+                <div>
+                  <p className="text-2xl sm:text-3xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
+                    {c.value}
+                  </p>
+                  <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 sm:mt-1">{c.label}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -278,17 +280,17 @@ export default function PaymentsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => openRecordModal()}
-                className="w-full py-3 rounded-xl text-white font-semibold text-sm cursor-pointer border-none transition-opacity hover:opacity-90"
+                className="flex-1 py-3 rounded-xl text-white font-semibold text-sm cursor-pointer border-none transition-opacity hover:opacity-90"
                 style={{ background: '#E57432' }}
               >
                 + Record Payment
               </button>
               <button
                 onClick={() => handleSectionChange('payout')}
-                className="w-full py-3 rounded-xl font-semibold text-sm cursor-pointer border border-gray-200 transition-colors hover:border-gray-300"
+                className="flex-1 py-3 rounded-xl font-semibold text-sm cursor-pointer border border-gray-200 transition-colors hover:border-gray-300"
                 style={{ background: '#F3F4F6', color: 'var(--color-dark)' }}
               >
                 📋 Manage Payouts
@@ -300,7 +302,7 @@ export default function PaymentsPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleSectionChange('payment')}
-              className="py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all"
+              className="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-all"
               style={{
                 background: '#FFFFFF',
                 border: activeSection === 'payment' ? '2px solid #E57432' : '1px solid #E5E7EB',
@@ -311,7 +313,7 @@ export default function PaymentsPage() {
             </button>
             <button
               onClick={() => handleSectionChange('payout')}
-              className="py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all"
+              className="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer transition-all"
               style={{
                 background: '#FFFFFF',
                 border: activeSection === 'payout' ? '2px solid #E57432' : '1px solid #E5E7EB',

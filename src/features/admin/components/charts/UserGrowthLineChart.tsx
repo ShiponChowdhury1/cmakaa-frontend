@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { LabelProps } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
@@ -54,7 +54,7 @@ export default function UserGrowthLineChart({ data }: Props) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-6 w-full">
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-5">
         <div>
           <h3 className="text-sm font-semibold text-[var(--color-dark)] mb-1">User Growth Trend</h3>
           <p className="text-xs text-[var(--color-gray-400)]">Total users, bankers and participants over time</p>
@@ -73,61 +73,63 @@ export default function UserGrowthLineChart({ data }: Props) {
         </div>
       </div>
 
-      <LineChart
-        style={{ width: '100%', aspectRatio: 2.8 }}
-        responsive
-        data={series.length ? series : [{ month: '—', users: 0, bankers: 0, participants: 0 }]}
-        margin={{ top: 20, right: 10, left: -10, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-        <XAxis
-          dataKey="month"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#9CA3AF', fontSize: 12 }}
-        />
-        <YAxis
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#9CA3AF', fontSize: 12 }}
-        />
-        <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#E5E7EB', strokeWidth: 1 }} />
-        <Legend
-          iconType="circle"
-          iconSize={8}
-          wrapperStyle={{ fontSize: '12px', color: '#6B7280', paddingTop: '12px' }}
-          formatter={(value) => {
-            const labels: Record<string, string> = { users: 'Total Users', bankers: 'Bankers', participants: 'Participants' };
-            return labels[value] || value;
-          }}
-        />
-        <Line
-          type="monotone"
-          dataKey="users"
-          stroke="#7C3AED"
-          strokeWidth={2.5}
-          label={<CustomizedLabel />}
-          dot={{ r: 4, fill: '#fff', stroke: '#7C3AED', strokeWidth: 2 }}
-          activeDot={{ r: 6, fill: '#7C3AED', stroke: '#fff', strokeWidth: 2 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="bankers"
-          stroke="#F97316"
-          strokeWidth={2.5}
-          dot={{ r: 4, fill: '#fff', stroke: '#F97316', strokeWidth: 2 }}
-          activeDot={{ r: 6, fill: '#F97316', stroke: '#fff', strokeWidth: 2 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="participants"
-          stroke="#10B981"
-          strokeWidth={2.5}
-          dot={{ r: 4, fill: '#fff', stroke: '#10B981', strokeWidth: 2 }}
-          activeDot={{ r: 6, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
-        />
-        <RechartsDevtools />
-      </LineChart>
+      <div className="w-full h-64 sm:h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={series.length ? series : [{ month: '—', users: 0, bankers: 0, participants: 0 }]}
+            margin={{ top: 20, right: 10, left: -10, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#E5E7EB', strokeWidth: 1 }} />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: '12px', color: '#6B7280', paddingTop: '12px' }}
+              formatter={(value) => {
+                const labels: Record<string, string> = { users: 'Total Users', bankers: 'Bankers', participants: 'Participants' };
+                return labels[value] || value;
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="users"
+              stroke="#7C3AED"
+              strokeWidth={2.5}
+              label={<CustomizedLabel />}
+              dot={{ r: 4, fill: '#fff', stroke: '#7C3AED', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#7C3AED', stroke: '#fff', strokeWidth: 2 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="bankers"
+              stroke="#F97316"
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: '#fff', stroke: '#F97316', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#F97316', stroke: '#fff', strokeWidth: 2 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="participants"
+              stroke="#10B981"
+              strokeWidth={2.5}
+              dot={{ r: 4, fill: '#fff', stroke: '#10B981', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#10B981', stroke: '#fff', strokeWidth: 2 }}
+            />
+            <RechartsDevtools />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

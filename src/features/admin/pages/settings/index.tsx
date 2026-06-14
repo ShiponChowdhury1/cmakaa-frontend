@@ -182,7 +182,7 @@ function GradientButton({ children, onClick, className = '' }: GradientButtonPro
   return (
     <button
       onClick={onClick}
-      className={`px-5 py-2 rounded-lg text-white text-sm font-semibold cursor-pointer border-none ${className}`}
+      className={`px-5 py-2.5 rounded-lg text-white text-sm font-semibold cursor-pointer border-none w-full sm:w-auto ${className}`}
       style={{ ...gradientStyle, transition: 'opacity 0.2s' }}
       onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
@@ -306,7 +306,6 @@ export default function SettingsPage() {
         newPassword: newPassword.trim(),
       }).unwrap();
 
-      // Verify the backend actually confirmed success
       if (!response.success) {
         const msg = response.message || 'Failed to change password.';
         setPasswordError(msg);
@@ -323,7 +322,6 @@ export default function SettingsPage() {
       setShowConfirmPassword(false);
       toast.success('Password changed successfully.');
     } catch (error: unknown) {
-      // RTK Query errors from .unwrap() are { status, data } objects, NOT Error instances
       let message = 'Failed to change password.';
       if (error && typeof error === 'object' && 'data' in error) {
         const errData = (error as { data: { message?: string } }).data;
@@ -354,7 +352,7 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
+      <div className="min-h-screen px-4 sm:px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
         <div className="max-w-6xl mx-auto space-y-4">
           <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 text-sm text-gray-500 shadow-sm">
             Loading profile data...
@@ -366,7 +364,7 @@ export default function SettingsPage() {
 
   if (isError) {
     return (
-      <div className="min-h-screen px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
+      <div className="min-h-screen px-4 sm:px-6 py-8" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
         <div className="max-w-6xl mx-auto space-y-4">
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm">
             Failed to load profile data.
@@ -380,24 +378,22 @@ export default function SettingsPage() {
     <div className="min-h-screen" style={{ background: '#F7F8FA', fontFamily: 'system-ui, sans-serif' }}>
       {/* Top Header */}
       <div
-        className="sticky top-0 z-10 flex items-center justify-between px-6 py-4"
+        className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-4"
         style={{ background: '#F7F8FA',}}
       >
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E57432' }}>
+          <h1 className="text-xl sm:text-2xl font-bold" style={{ color: '#E57432' }}>
             Settings
           </h1>
-          <p className="text-xs text-gray-400 mt-0.5">Configure system preferences and security</p>
+          <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Configure system preferences and security</p>
         </div>
-       
       </div>
 
-      <div className="px-6 py-6 max-w-6xl mx-auto space-y-5">
-
+      <div className="px-4 py-4 sm:px-6 sm:py-6 max-w-6xl mx-auto space-y-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Admin Profile */}
           <Card className="h-full">
-            <div className="p-6 h-full flex flex-col">
+            <div className="p-4 sm:p-6 h-full flex flex-col">
               <SectionHeader icon={<User size={18} />} title="Admin Profile" />
               <div className="flex flex-col sm:flex-row gap-5 mb-5">
                 <div className="flex flex-col items-center sm:items-start gap-3 shrink-0">
@@ -411,7 +407,7 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer border-none" style={gradientStyle}>
+                  <label className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white cursor-pointer border-none w-full sm:w-auto" style={gradientStyle}>
                     Choose Photo
                     <input
                       type="file"
@@ -422,7 +418,7 @@ export default function SettingsPage() {
                   </label>
                 </div>
 
-                <div className="flex flex-col gap-4 flex-1">
+                <div className="flex flex-col gap-4 flex-1 w-full">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InputField label="First Name" value={resolvedFirstName} onChange={value => setFirstName(value)} />
                     <InputField label="Last Name" value={resolvedLastName} onChange={value => setLastName(value)} />
@@ -455,10 +451,10 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="mt-auto flex flex-col items-end gap-3">
+              <div className="mt-auto flex flex-col items-end gap-3 w-full">
                 {saveMessage && <p className="text-xs font-medium text-green-600">{saveMessage}</p>}
                 {saveError && <p className="text-xs font-medium text-red-600">{saveError}</p>}
-                <GradientButton className="self-end" onClick={handleSaveProfile}>
+                <GradientButton className="w-full sm:w-auto" onClick={handleSaveProfile}>
                   {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
                 </GradientButton>
               </div>
@@ -467,7 +463,7 @@ export default function SettingsPage() {
 
           {/* Change Password */}
           <Card className="h-full">
-            <div className="p-6 h-full flex flex-col">
+            <div className="p-4 sm:p-6 h-full flex flex-col">
               <SectionHeader icon={<Lock size={18} />} title="Change Password" />
               <div className="space-y-4 mb-5">
                 <PasswordField
@@ -497,10 +493,10 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <div className="mt-auto flex flex-col items-start gap-3">
+              <div className="mt-auto flex flex-col items-start gap-3 w-full">
                 {passwordMessage && <p className="text-xs font-medium text-green-600">{passwordMessage}</p>}
                 {passwordError && <p className="text-xs font-medium text-red-600">{passwordError}</p>}
-                <GradientButton className="self-start" onClick={handleChangePassword}>
+                <GradientButton className="w-full sm:w-auto" onClick={handleChangePassword}>
                   {isChangingPassword ? 'Updating...' : 'Update Password'}
                 </GradientButton>
               </div>
@@ -510,7 +506,7 @@ export default function SettingsPage() {
 
         {/* Notification Settings */}
         <Card>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <SectionHeader icon={<Bell size={18} />} title="Notification Settings" />
             <div className="divide-y divide-gray-50">
               <SettingRow label="Email Notifications" description="Receive email alerts for system events">
@@ -531,7 +527,7 @@ export default function SettingsPage() {
 
         {/* Compliance Settings */}
         <Card>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <SectionHeader icon={<Globe size={18} />} title="Compliance Settings" />
             <div className="divide-y divide-gray-50">
               <SettingRow label="Require Dual Approval" description="Require two admins to approve critical actions">
@@ -543,17 +539,6 @@ export default function SettingsPage() {
             </div>
           </div>
         </Card>
-
-        {/* Footer note */}
-        <div
-          className="flex items-start gap-2 px-4 py-3 rounded-xl"
-          style={{ background: '#FFF4EC', border: '1px solid #FFD6B5' }}
-        >
-          <span style={{ color: '#E57432', fontSize: '16px', marginTop: '1px' }}>ℹ️</span>
-          <p className="text-xs text-gray-500">
-            All settings changes are recorded in the system audit log with timestamp and admin identifier.
-          </p>
-        </div>
       </div>
     </div>
   );

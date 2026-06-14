@@ -44,7 +44,6 @@ export default function InviteModal({ participants, onClose }: Props) {
     <div
       className="fixed inset-0 z-[999] flex items-center justify-center p-4"
       style={{ backgroundColor: 'rgba(5,10,20,0.45)', backdropFilter: 'blur(3px)' }}
-      onClick={onClose}
     >
       <div
         className="w-full max-w-md rounded-3xl border border-gray-100 p-6 overflow-y-auto"

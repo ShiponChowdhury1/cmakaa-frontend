@@ -59,35 +59,6 @@ export default function AnalyticsPage() {
 
       {/* Charts Row 2: Line Chart */}
       <UserGrowthLineChart />
-
-      {/* Top Performing Pardnas */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <h3 className="text-sm font-semibold text-[var(--color-dark)] mb-4">Top Performing Pardnas</h3>
-        <div className="space-y-3">
-          {[
-            { name: 'Family Monthly', score: 98, amount: '£12,400' },
-            { name: 'Community Build', score: 92, amount: '£8,200' },
-            { name: 'Youth Club Savings', score: 88, amount: '£6,800' },
-            { name: 'Summer Holiday Fund', score: 85, amount: '£5,100' },
-          ].map((p) => (
-            <div key={p.name} className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-sm font-medium text-[var(--color-dark)]">{p.name}</span>
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-32">
-                  <div
-                    className="h-full bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-light)] rounded-full transition-all"
-                    style={{ width: `${p.score}%` }}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-medium text-[var(--color-primary)]">{p.score}%</span>
-                <span className="text-sm font-semibold text-[var(--color-dark)]">{p.amount}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

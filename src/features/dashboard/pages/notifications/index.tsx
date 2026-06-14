@@ -134,6 +134,23 @@ export default function NotificationsPage() {
 
   const totalUnread = notifications.filter((n) => !n.isRead).length;
 
+  const getPageNumbers = () => {
+    if (!pagination) return [];
+    const totalPages = pagination.totalPages;
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [];
+    if (page <= 3) {
+      pages.push(1, 2, 3, 4, '...', totalPages);
+    } else if (page >= totalPages - 2) {
+      pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      pages.push(1, '...', page - 1, page, page + 1, '...', totalPages);
+    }
+    return pages;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in pb-24 max-w-3xl mx-auto">
       {/* ── Header ──────────────────────────────────── */}
@@ -169,12 +186,12 @@ export default function NotificationsPage() {
       </div>
 
       {/* ── Filters ─────────────────────────────────── */}
-      <div className="flex gap-2 border-b border-gray-100 pb-px">
+      <div className="flex gap-2 border-b border-gray-100 pb-px overflow-x-auto whitespace-nowrap scrollbar-none">
         {(['all', 'unread', 'read'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className="px-4 py-2.5 text-sm font-semibold capitalize cursor-pointer transition-all border-b-2 -mb-px flex items-center gap-1.5"
+            className="px-4 py-2.5 text-sm font-semibold capitalize cursor-pointer transition-all border-b-2 -mb-px flex items-center gap-1.5 shrink-0"
             style={{
               borderColor: filter === t ? '#E57432' : 'transparent',
               color: filter === t ? '#E57432' : '#64748B',
@@ -272,8 +289,8 @@ export default function NotificationsPage() {
 
       {/* ── Pagination ──────────────────────────────── */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-100 pt-4 px-2">
-          <p className="text-xs text-gray-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100 pt-4 px-2">
+          <p className="text-xs text-gray-500 text-center sm:text-left">
             Showing <span className="font-semibold text-gray-700">{(page - 1) * 10 + 1}</span> to{' '}
             <span className="font-semibold text-gray-700">
               {Math.min(page * 10, pagination.total)}
@@ -281,36 +298,44 @@ export default function NotificationsPage() {
             of <span className="font-semibold text-gray-700">{pagination.total}</span> notifications
           </p>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
-              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" /> Previous
             </button>
             
-            {Array.from({ length: pagination.totalPages }, (_, idx) => idx + 1).map((pNum) => (
-              <button
-                key={pNum}
-                onClick={() => setPage(pNum)}
-                className="w-8 h-8 rounded-xl text-xs font-semibold transition-all cursor-pointer border"
-                style={{
-                  background: page === pNum ? '#E57432' : 'white',
-                  borderColor: page === pNum ? '#E57432' : '#E2E8F0',
-                  color: page === pNum ? 'white' : '#475569',
-                }}
-              >
-                {pNum}
-              </button>
-            ))}
+            {getPageNumbers().map((pNum, idx) => {
+              if (pNum === '...') {
+                return (
+                  <span key={`dots-${idx}`} className="px-1 text-xs font-semibold text-gray-400 select-none">
+                    ...
+                  </span>
+                );
+              }
+              return (
+                <button
+                  key={pNum}
+                  onClick={() => setPage(Number(pNum))}
+                  className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none"
+                  style={{
+                    background: page === pNum ? '#E57432' : 'transparent',
+                    color: page === pNum ? 'white' : '#475569',
+                  }}
+                >
+                  {pNum}
+                </button>
+              );
+            })}
 
             <button
               onClick={() => setPage((p) => Math.min(p + 1, pagination.totalPages))}
               disabled={page === pagination.totalPages}
-              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ChevronRight className="w-4 h-4" />
+              Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

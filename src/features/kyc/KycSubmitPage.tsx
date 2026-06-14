@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Upload, X, FileText, Camera, CreditCard, ChevronDown, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useSubmitKycMutation, useGetMyKycQuery } from '@/store/features/kyc/kycApi';
@@ -22,7 +22,7 @@ export default function KycSubmitPage() {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const [submitKyc, { isLoading }] = useSubmitKycMutation();
-  const { data: kycResponse } = useGetMyKycQuery();
+  const { data: kycResponse, isLoading: isKycLoading } = useGetMyKycQuery();
   const kycData = kycResponse?.data;
 
   // Form state
@@ -39,9 +39,6 @@ export default function KycSubmitPage() {
   const frontRef = useRef<HTMLInputElement>(null);
   const backRef = useRef<HTMLInputElement>(null);
   const selfieRef = useRef<HTMLInputElement>(null);
-
-  const isRejected = user?.kycStatus === 'REJECTED' || kycData?.status === 'REJECTED';
-  const rejectionReason = kycData?.rejectionReason;
 
   const handleFileChange = useCallback(
     (setter: React.Dispatch<React.SetStateAction<FileUploadState>>) =>
@@ -75,17 +72,52 @@ export default function KycSubmitPage() {
     [],
   );
 
+  // Redirect to pending/approved if already submitted/approved
+  useEffect(() => {
+    if (user?.kycStatus === 'APPROVED' || kycData?.status === 'APPROVED') {
+      navigate('/dashboard', { replace: true });
+    } else if (user?.kycStatus === 'PENDING' || kycData?.status === 'PENDING') {
+      navigate('/kyc/pending', { replace: true });
+    }
+  }, [user?.kycStatus, kycData?.status, navigate]);
+
+  if (isKycLoading) {
+    return (
+      <div className="min-h-screen bg-[#FFF8F3] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-3 border-[#E57432] border-t-transparent animate-spin" />
+          <p className="text-sm text-[var(--color-gray-500)]">Loading your KYC status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isRejected = user?.kycStatus === 'REJECTED' || kycData?.status === 'REJECTED';
+  const rejectionReason = kycData?.rejectionReason;
+
+  const getFrontLabel = () => {
+    if (documentType === 'PASSPORT') return 'Passport Info Page';
+    if (documentType === 'DRIVING_LICENSE') return "Driver's License Front";
+    return 'National ID Front';
+  };
+
+  const getBackLabel = () => {
+    if (documentType === 'PASSPORT') return 'Passport Cover (Optional)';
+    if (documentType === 'DRIVING_LICENSE') return "Driver's License Back";
+    return 'National ID Back';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError('');
 
     // Validate
     if (!documentFront.file) {
-      setApiError('Please upload the front of your document');
+      setApiError(`Please upload your ${getFrontLabel().toLowerCase()}`);
       return;
     }
-    if (!documentBack.file) {
-      setApiError('Please upload the back of your document');
+    if (documentType !== 'PASSPORT' && !documentBack.file) {
+      setApiError(`Please upload your ${getBackLabel().toLowerCase()}`);
       return;
     }
     if (!selfie.file) {
@@ -98,11 +130,20 @@ export default function KycSubmitPage() {
     }
 
     try {
+      const backFile = documentType === 'PASSPORT' && !documentBack.file
+        ? documentFront.file // Duplicate front file if cover is not provided
+        : documentBack.file;
+
+      if (!backFile) {
+        setApiError('Please upload the back of your document');
+        return;
+      }
+
       await submitKyc({
         documentType,
         notes: notes.trim(),
         documentFront: documentFront.file,
-        documentBack: documentBack.file,
+        documentBack: backFile,
         selfieUrl: selfie.file,
       }).unwrap();
 
@@ -292,7 +333,7 @@ export default function KycSubmitPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Document Front */}
               <FileUploadCard
-                label="Document Front"
+                label={getFrontLabel()}
                 file={documentFront}
                 inputRef={frontRef}
                 onFileChange={handleFileChange(setDocumentFront)}
@@ -302,7 +343,7 @@ export default function KycSubmitPage() {
 
               {/* Document Back */}
               <FileUploadCard
-                label="Document Back"
+                label={getBackLabel()}
                 file={documentBack}
                 inputRef={backRef}
                 onFileChange={handleFileChange(setDocumentBack)}

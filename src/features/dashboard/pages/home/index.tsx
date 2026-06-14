@@ -116,7 +116,7 @@ export default function HomePage() {
       <GettingStartedBanner onReadGuide={() => navigate('/dashboard/guide')} />
 
       {/* Greeting + New Pardna */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-[var(--color-dark)]" style={{ fontFamily: 'var(--font-heading)' }}>
             {greeting}, {user?.firstName || 'Sarah'}
@@ -126,7 +126,7 @@ export default function HomePage() {
         </div>
         <button
           onClick={() => navigate('/dashboard/pardnas/new')}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer border-none transition-all hover:opacity-90 active:scale-95 shrink-0"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer border-none transition-all hover:opacity-90 active:scale-95 w-full sm:w-auto shrink-0"
           style={{ background: '#E57432' }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -137,36 +137,42 @@ export default function HomePage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-6 py-2">
-        <div className="flex flex-col gap-1">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
+        <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
               <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
               <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)]">{activePardnasCount}</p>
-          <p className="text-xs text-[var(--color-gray-400)]">Active Pardnas</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-none">{activePardnasCount}</p>
+            <p className="text-xs text-[var(--color-gray-400)] mt-1.5">Active Pardnas</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
+        <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)]">{totalParticipants}</p>
-          <p className="text-xs text-[var(--color-gray-400)]">Total Participants</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-none">{totalParticipants}</p>
+            <p className="text-xs text-[var(--color-gray-400)] mt-1.5">Total Participants</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center mb-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
+        <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2">
               <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
             </svg>
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)]">{totalValue}</p>
-          <p className="text-xs text-[var(--color-gray-400)]">Total Value</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-none">{totalValue}</p>
+            <p className="text-xs text-[var(--color-gray-400)] mt-1.5">Total Value</p>
+          </div>
         </div>
       </div>
 

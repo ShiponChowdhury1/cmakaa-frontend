@@ -112,48 +112,54 @@ export default function PayoutsPage() {
       </div>
 
       {/* ── Stats Cards ─────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total paid out */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm text-center relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center mx-auto mb-2 text-[#E57432]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4 text-left sm:text-center relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0 sm:mx-auto mb-0 sm:mb-2 text-[#E57432]">
             <DollarSign className="w-5 h-5" />
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-            £{totalPaidOut.toLocaleString()}
-          </p>
-          <p className="text-xs font-medium text-[#64748B] mt-1">Total Paid Out</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              £{totalPaidOut.toLocaleString()}
+            </p>
+            <p className="text-xs font-medium text-[#64748B] mt-0.5 sm:mt-1">Total Paid Out</p>
+          </div>
         </div>
 
         {/* Rounds done */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm text-center relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-2 text-[#16A34A]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4 text-left sm:text-center relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0 sm:mx-auto mb-0 sm:mb-2 text-[#16A34A]">
             <CheckCircle2 className="w-5 h-5" />
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-            {confirmedPayouts.length}/{totalRounds}
-          </p>
-          <p className="text-xs font-medium text-[#64748B] mt-1">Completed Payouts</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              {confirmedPayouts.length}/{totalRounds}
+            </p>
+            <p className="text-xs font-medium text-[#64748B] mt-0.5 sm:mt-1">Completed Payouts</p>
+          </div>
         </div>
 
         {/* Remaining */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm text-center relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-2 text-[#2563EB]">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center sm:block gap-4 text-left sm:text-center relative overflow-hidden group hover:shadow-md transition-shadow">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 sm:mx-auto mb-0 sm:mb-2 text-[#2563EB]">
             <Clock className="w-5 h-5" />
           </div>
-          <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-            {remaining}
-          </p>
-          <p className="text-xs font-medium text-[#64748B] mt-1">Pending Payouts</p>
+          <div>
+            <p className="text-2xl font-bold text-[var(--color-dark)] leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              {remaining}
+            </p>
+            <p className="text-xs font-medium text-[#64748B] mt-0.5 sm:mt-1">Pending Payouts</p>
+          </div>
         </div>
       </div>
 
       {/* ── Tabs Filter ────────────────────────────── */}
-      <div className="flex gap-2 border-b border-gray-100 pb-px">
+      <div className="flex gap-2 border-b border-gray-100 pb-px overflow-x-auto whitespace-nowrap scrollbar-none">
         {(['all', 'pending', 'confirmed'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="px-4 py-2.5 text-sm font-semibold capitalize cursor-pointer transition-all border-b-2 -mb-px"
+            className="px-4 py-2.5 text-sm font-semibold capitalize cursor-pointer transition-all border-b-2 -mb-px shrink-0"
             style={{
               borderColor: activeTab === tab ? '#E57432' : 'transparent',
               color: activeTab === tab ? '#E57432' : '#64748B',

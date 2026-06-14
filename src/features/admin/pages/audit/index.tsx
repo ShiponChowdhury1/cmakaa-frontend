@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import StatsCard from '../../components/StatsCard';
 import { useGetAdminAuditLogsQuery } from '@/store/features/adminDashboard/adminDashboardApi';
 import type { AdminAuditLog } from '@/store/features/adminDashboard/adminDashboardApi.types';
+import { isDateWithinDays } from '@/utils/dateFilter';
 
 type LogType = 'payment' | 'payout' | 'status' | 'admin' | 'lifecycle' | 'kyc' | 'trust' | 'auth';
 
@@ -74,6 +76,7 @@ const PAGE_SIZE = 10;
 export default function AuditLogPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const { daysFilter } = useOutletContext<{ daysFilter: string }>();
 
   // Fetch audit logs from API
   const { data: response, isLoading, isError } = useGetAdminAuditLogsQuery({
@@ -82,7 +85,9 @@ export default function AuditLogPage() {
     search: search.trim() || undefined,
   });
 
-  const auditLogs = (response?.data ?? []).map(mapToAuditLog);
+  const rawAuditLogs = response?.data ?? [];
+  const filteredRawLogs = rawAuditLogs.filter(l => isDateWithinDays(l.createdAt, daysFilter, rawAuditLogs.map(x => x.createdAt)));
+  const auditLogs = filteredRawLogs.map(mapToAuditLog);
   const pagination = response?.meta.pagination;
   const totalItems = pagination?.total ?? auditLogs.length;
   const totalPages = pagination?.totalPages ?? 1;
@@ -197,7 +202,7 @@ export default function AuditLogPage() {
       {/* Table */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[850px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left text-xs font-semibold text-[var(--color-gray-400)] uppercase tracking-wider px-5 py-3 w-40">Time</th>
@@ -246,8 +251,8 @@ export default function AuditLogPage() {
         </div>
 
         {/* Pagination footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
-          <p className="text-xs text-[var(--color-gray-400)]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-5 py-4 border-t border-gray-100">
+          <p className="text-xs text-[var(--color-gray-400)] text-center sm:text-left">
             Showing{' '}
             <span className="font-semibold text-[var(--color-dark)]">
               {Math.min((page-1)*PAGE_SIZE+1, totalItems)}–{Math.min(page*PAGE_SIZE, totalItems)}
@@ -257,11 +262,11 @@ export default function AuditLogPage() {
             events
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p-1))}
               disabled={page === 1}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={14} /> Previous
             </button>
@@ -269,7 +274,7 @@ export default function AuditLogPage() {
             {getPageNumbers().map((n, idx) => {
               if (n === '...') {
                 return (
-                  <span key={`dots-${idx}`} className="px-1.5 text-xs font-semibold text-[var(--color-gray-400)] select-none">
+                  <span key={`dots-${idx}`} className="px-1 text-xs font-semibold text-[var(--color-gray-400)] select-none">
                     ...
                   </span>
                 );
@@ -278,7 +283,7 @@ export default function AuditLogPage() {
                 <button
                   key={n}
                   onClick={() => setPage(Number(n))}
-                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
+                  className={`w-7 sm:w-8 h-7 sm:h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
                     n === page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-gray-500)] hover:bg-gray-100'
                   }`}
                 >
@@ -290,7 +295,7 @@ export default function AuditLogPage() {
             <button
               onClick={() => setPage(p => Math.min(totalPages, p+1))}
               disabled={page === totalPages}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Next <ChevronRight size={14} />
             </button>

@@ -370,8 +370,8 @@ export default function KycReviewPage() {
 
         {/* Pagination footer */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-            <p className="text-xs text-[var(--color-gray-400)]">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-[var(--color-gray-400)] text-center sm:text-left">
               Showing{' '}
               <span className="font-semibold text-[var(--color-dark)]">
                 {Math.min((page-1)*PAGE_SIZE+1, totalCount)}–{Math.min(page*PAGE_SIZE, totalCount)}
@@ -381,11 +381,11 @@ export default function KycReviewPage() {
               applications
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p-1))}
                 disabled={page === 1}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <ChevronLeft size={14} /> Previous
               </button>
@@ -393,7 +393,7 @@ export default function KycReviewPage() {
               {getPageNumbers().map((n, idx) => {
                 if (n === '...') {
                   return (
-                    <span key={`dots-${idx}`} className="px-1.5 text-xs font-semibold text-[var(--color-gray-400)] select-none">
+                    <span key={`dots-${idx}`} className="px-1 text-xs font-semibold text-[var(--color-gray-400)] select-none">
                       ...
                     </span>
                   );
@@ -402,7 +402,7 @@ export default function KycReviewPage() {
                   <button
                     key={n}
                     onClick={() => setPage(Number(n))}
-                    className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
+                    className={`w-7 sm:w-8 h-7 sm:h-8 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
                       n === page ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-gray-500)] hover:bg-gray-100'
                     }`}
                   >
@@ -414,7 +414,7 @@ export default function KycReviewPage() {
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p+1))}
                 disabled={page === totalPages}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-[var(--color-gray-500)] hover:bg-gray-50 hover:text-[var(--color-dark)] transition-all cursor-pointer bg-white disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next <ChevronRight size={14} />
               </button>

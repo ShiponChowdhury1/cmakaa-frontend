@@ -50,8 +50,8 @@ export default function DashboardTopBar() {
 
       
           {/* Row 2: Profile Card */}
-          <div className="flex items-center justify-between px-5 py-4 sm:px-6">
-            <Link to="/home" className="flex items-center gap-3 no-underline group" title="Go to Home page">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 sm:px-6">
+            <Link to="/home" className="flex items-center gap-3 no-underline group min-w-0" title="Go to Home page">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shrink-0 ring-2 ring-transparent transition-all group-hover:ring-[var(--color-primary)]/30">
                 {user?.profilePicture ? (
                   <img
@@ -65,22 +65,39 @@ export default function DashboardTopBar() {
                   </div>
                 )}
               </div>
-              <div>
-                <p className="text-sm font-bold text-[var(--color-dark)] leading-tight group-hover:text-[var(--color-primary)] transition-colors">{displayName}</p>
-                <p className="text-xs text-[var(--color-gray-400)]">{displayEmail}</p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[var(--color-dark)] leading-tight group-hover:text-[var(--color-primary)] transition-colors truncate">{displayName}</p>
+                <p className="text-xs text-[var(--color-gray-400)] truncate">{displayEmail}</p>
               </div>
             </Link>
-            <button
-              onClick={() => navigate('/dashboard/profile')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white cursor-pointer border-none transition-all hover:opacity-90 active:scale-95"
-              style={{ background: '#1B2A4A' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Edit
-            </button>
+            <div className="flex items-center gap-2 sm:self-auto self-start sm:ml-0 ml-[60px]">
+              {user?.role === 'ADMIN' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white cursor-pointer border-none transition-all hover:opacity-90 active:scale-95 whitespace-nowrap"
+                  style={{ background: '#E05A1E' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  Admin Panel
+                </button>
+              )}
+              <button
+                onClick={() => navigate('/dashboard/profile')}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white cursor-pointer border-none transition-all hover:opacity-90 active:scale-95 whitespace-nowrap"
+                style={{ background: '#1B2A4A' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit
+              </button>
+            </div>
           </div>
 
           {/* Row 3: Tabs */}

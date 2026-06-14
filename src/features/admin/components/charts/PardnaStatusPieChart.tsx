@@ -1,4 +1,4 @@
-import { Pie, PieChart, Sector, Tooltip } from 'recharts';
+import { Pie, PieChart, Sector, Tooltip, ResponsiveContainer } from 'recharts';
 import type { PieLabelRenderProps, PieSectorShapeProps } from 'recharts';
 import { RechartsDevtools } from '@recharts/devtools';
 
@@ -110,34 +110,32 @@ export default function PardnaStatusPieChart({ statusData }: Props) {
       </div>
 
       {/* Chart */}
-      <div className="flex justify-center">
-        <PieChart
-          style={{ width: '100%', maxWidth: '300px', aspectRatio: 1 }}
-          responsive
-          margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        >
-          <defs>
-            <linearGradient id="active-pardna-grad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#E57432" />
-              <stop offset="100%" stopColor="#FF9C65" />
-            </linearGradient>
-          </defs>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={renderCustomizedLabel}
-            outerRadius={110}
-            innerRadius={55}
-            dataKey="value"
-            stroke="none"
-            strokeWidth={0}
-            shape={MyCustomSector}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <RechartsDevtools />
-        </PieChart>
+      <div className="w-full h-56 sm:h-64 flex justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="active-pardna-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#E57432" />
+                <stop offset="100%" stopColor="#FF9C65" />
+              </linearGradient>
+            </defs>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={renderCustomizedLabel}
+              outerRadius="85%"
+              innerRadius="45%"
+              dataKey="value"
+              stroke="none"
+              strokeWidth={0}
+              shape={MyCustomSector}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <RechartsDevtools />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Legend */}

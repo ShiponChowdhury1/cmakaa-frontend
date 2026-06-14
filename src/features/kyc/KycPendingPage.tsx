@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, FileText, Calendar, Shield, RefreshCw, CheckCircle2, CreditCard } from 'lucide-react';
+import { Clock, FileText, Calendar, Shield, RefreshCw, CheckCircle2, CreditCard, X } from 'lucide-react';
 import { useGetMyKycQuery } from '@/store/features/kyc/kycApi';
 import { useAppSelector } from '@/store';
 import type { KycDocumentType } from '@/store/features/kyc/kycApi.types';
@@ -18,6 +18,9 @@ export default function KycPendingPage() {
   const kycData = response?.data;
 
   const isApproved = kycData?.status === 'APPROVED' || user?.kycStatus === 'APPROVED';
+
+  // Lightbox Modal state
+  const [activePreview, setActivePreview] = useState<{ label: string; url: string } | null>(null);
 
   // If user is approved now, navigate to dashboard
   useEffect(() => {
@@ -54,6 +57,24 @@ export default function KycPendingPage() {
       })
     : null;
 
+  // Dynamic preview helper values
+  const getFrontLabel = () => {
+    if (kycData?.documentType === 'PASSPORT') return 'Passport Info Page';
+    if (kycData?.documentType === 'DRIVING_LICENSE') return "Driver's License Front";
+    return 'National ID Front';
+  };
+
+  const getBackLabel = () => {
+    if (kycData?.documentType === 'PASSPORT') return 'Passport Cover';
+    if (kycData?.documentType === 'DRIVING_LICENSE') return "Driver's License Back";
+    return 'National ID Back';
+  };
+
+  // If passport and back page is same as front, do not render duplicate back card
+  const showBackCard =
+    kycData?.documentType !== 'PASSPORT' ||
+    (kycData?.documentBack && kycData?.documentBack !== kycData?.documentFront);
+
   return (
     <div className="min-h-screen bg-[#FFF8F3]">
       {/* Top accent bar */}
@@ -69,7 +90,7 @@ export default function KycPendingPage() {
             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
               {/* Inner circle */}
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-200">
-                <Clock size={28} className="text-white" />
+                <Clock size={28} className="text-white animate-pulse" />
               </div>
             </div>
           </div>
@@ -167,17 +188,31 @@ export default function KycPendingPage() {
             </div>
 
             {/* Document previews */}
-            <div className="grid grid-cols-3 gap-3">
-              <DocumentPreview label="Front" url={kycData.documentFront} />
-              <DocumentPreview label="Back" url={kycData.documentBack} />
-              <DocumentPreview label="Selfie" url={kycData.selfieUrl} />
+            <div className={`grid gap-3 ${showBackCard ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              <DocumentPreview
+                label={getFrontLabel()}
+                url={kycData.documentFront}
+                onClick={() => setActivePreview({ label: getFrontLabel(), url: kycData.documentFront })}
+              />
+              {showBackCard && (
+                <DocumentPreview
+                  label={getBackLabel()}
+                  url={kycData.documentBack}
+                  onClick={() => setActivePreview({ label: getBackLabel(), url: kycData.documentBack })}
+                />
+              )}
+              <DocumentPreview
+                label="Selfie Photo"
+                url={kycData.selfieUrl}
+                onClick={() => setActivePreview({ label: 'Selfie Photo', url: kycData.selfieUrl })}
+              />
             </div>
 
             {/* Notes */}
             {kycData.notes && (
-              <div className="mt-4 p-3 rounded-xl bg-[var(--color-gray-100)] border border-[var(--color-gray-200)]">
-                <p className="text-xs font-semibold text-[var(--color-gray-500)] mb-1">Notes</p>
-                <p className="text-sm text-[var(--color-dark)]">{kycData.notes}</p>
+              <div className="mt-5 p-4 rounded-xl bg-[var(--color-gray-100)] border border-[var(--color-gray-200)]">
+                <p className="text-xs font-bold text-[var(--color-gray-500)] mb-1 uppercase tracking-wider">Application Notes</p>
+                <p className="text-sm text-[var(--color-dark)] leading-relaxed">{kycData.notes}</p>
               </div>
             )}
           </div>
@@ -190,7 +225,7 @@ export default function KycPendingPage() {
           className="w-full py-3.5 rounded-xl border-2 border-[var(--color-gray-200)] bg-white text-[var(--color-dark)] font-semibold text-sm transition-all duration-200 hover:border-[#E57432] hover:bg-orange-50 cursor-pointer flex items-center justify-center gap-2 animate-fade-in-up"
           style={{ animationDelay: '300ms' }}
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} className="animate-spin-slow" />
           Check Status Again
         </button>
 
@@ -202,22 +237,63 @@ export default function KycPendingPage() {
           </a>
         </p>
       </div>
+
+      {/* Lightbox / Zoom Overlay */}
+      {activePreview && (
+        <div
+          className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm p-4 cursor-pointer animate-fade-in"
+          onClick={() => setActivePreview(null)}
+        >
+          <div className="relative max-w-3xl max-h-[80vh] w-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setActivePreview(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-sm font-semibold"
+            >
+              <X size={18} /> Close
+            </button>
+            <img
+              src={activePreview.url}
+              alt={activePreview.label}
+              className="max-w-full max-h-[70vh] rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+            <p className="text-white font-semibold mt-4 text-sm tracking-wider uppercase bg-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+              {activePreview.label}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── Document Preview Component ── */
-function DocumentPreview({ label, url }: { label: string; url: string }) {
+function DocumentPreview({
+  label,
+  url,
+  onClick,
+}: {
+  label: string;
+  url: string;
+  onClick: () => void;
+}) {
   return (
-    <div>
-      <p className="text-xs font-medium text-[var(--color-gray-400)] mb-1.5">{label}</p>
-      <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[4/3]">
+    <div className="group cursor-pointer" onClick={onClick}>
+      <p className="text-xs font-semibold text-[var(--color-gray-400)] mb-1.5 truncate group-hover:text-[#E57432] transition-colors">
+        {label}
+      </p>
+      <div className="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[4/3] shadow-sm group-hover:border-[#E57432] group-hover:shadow transition-all duration-200">
         <img
           src={url}
           alt={`${label} document`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
+        {/* Subtle magnifying glass overlay on hover */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <span className="text-white text-xs font-semibold bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-sm">
+            Click to zoom
+          </span>
+        </div>
       </div>
     </div>
   );
