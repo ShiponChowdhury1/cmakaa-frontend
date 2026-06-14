@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/utils/cn';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { logout } from '@/store/features/auth/authSlice';
@@ -19,6 +19,7 @@ const tabs = [
 
 export default function DashboardTopBar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((s) => s.auth);
   const [serverLogout] = useServerLogoutMutation();
@@ -128,27 +129,29 @@ export default function DashboardTopBar() {
       </header>
 
       {/* Bottom Navigation Bar (Mobile only) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] px-2 pb-[env(safe-area-inset-bottom)] sm:hidden flex items-center justify-around h-16">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <NavLink
-              key={tab.path}
-              to={tab.path}
-              end={tab.path === '/dashboard'}
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center justify-center flex-1 py-1 px-1.5 no-underline transition-all duration-200 select-none',
-                  isActive ? 'text-[#E57432]' : 'text-gray-400 hover:text-gray-600'
-                )
-              }
-            >
-              <Icon size={18} className="mb-0.5" />
-              <span className="text-[9px] font-semibold tracking-wide">{tab.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
+      {location.pathname !== '/dashboard/pardnas/new' && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] px-2 pb-[env(safe-area-inset-bottom)] sm:hidden flex items-center justify-around h-16">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <NavLink
+                key={tab.path}
+                to={tab.path}
+                end={tab.path === '/dashboard'}
+                className={({ isActive }) =>
+                  cn(
+                    'flex flex-col items-center justify-center flex-1 py-1 px-1.5 no-underline transition-all duration-200 select-none',
+                    isActive ? 'text-[#E57432]' : 'text-gray-400 hover:text-gray-600'
+                  )
+                }
+              >
+                <Icon size={18} className="mb-0.5" />
+                <span className="text-[9px] font-semibold tracking-wide">{tab.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
 
       {/* Logout Modal */}
       {showLogoutModal && (

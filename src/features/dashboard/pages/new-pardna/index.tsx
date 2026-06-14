@@ -10,7 +10,7 @@ import StepSummary from './steps/StepReview';
 import StepDone from './steps/StepDone';
 import { useCreatePardnaMutation } from '@/store/features/createPardna/createPardna.api';
 import { toast } from 'react-toastify';
-import { Landmark, ShieldAlert, Users, ArrowRightLeft, FileCheck, CheckCircle2, ChevronLeft, Check } from 'lucide-react';
+import { Landmark, ShieldAlert, Users, ArrowRightLeft, FileCheck, CheckCircle2, ChevronLeft, Check, AlertCircle } from 'lucide-react';
 
 const STEP_ICONS = [
   /* Basics */    <Landmark key="b" size={14} />,
@@ -30,8 +30,70 @@ export default function NewPardnaPage() {
   const update = (partial: Partial<NewPardnaFormData>) =>
     setForm((prev) => ({ ...prev, ...partial }));
 
-  const next = () => setStep((s) => Math.min(s + 1, 5) as StepIndex);
   const back = () => setStep((s) => Math.max(s - 1, 0) as StepIndex);
+
+  /* ── Per-step validation ── */
+  const validateStep = (): boolean => {
+    if (step === 0) {
+      const missing: string[] = [];
+      if (!form.name.trim()) missing.push('Pardna Name');
+      if (!form.contributionAmount || Number(form.contributionAmount) <= 0) missing.push('Contribution Amount');
+      if (!form.numberOfParticipants || Number(form.numberOfParticipants) < 2) missing.push('Number of Members (min 2)');
+      if (!form.startDate) missing.push('Start Date');
+      if (!form.frequency) missing.push('Frequency');
+      if (missing.length > 0) {
+        toast.error(
+          <div className="text-sm">
+            <p className="font-bold flex items-center gap-1.5 mb-1"><AlertCircle size={14} /> Missing required fields</p>
+            <ul className="list-disc list-inside text-xs text-gray-200 space-y-0.5">
+              {missing.map((f) => <li key={f}>{f}</li>)}
+            </ul>
+          </div>
+        );
+        return false;
+      }
+    }
+
+    if (step === 2) {
+      const incomplete = form.participants.filter((p) => !p.name.trim() || !p.email.trim() || !p.phone.trim());
+      if (incomplete.length > 0) {
+        toast.error(
+          <div className="text-sm">
+            <p className="font-bold flex items-center gap-1.5 mb-1"><AlertCircle size={14} /> Incomplete participants</p>
+            <p className="text-xs text-gray-200">{incomplete.length} participant{incomplete.length > 1 ? 's' : ''} still need name, email, and phone number.</p>
+          </div>
+        );
+        return false;
+      }
+
+      // Basic email format check
+      const badEmails = form.participants.filter((p) => p.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email.trim()));
+      if (badEmails.length > 0) {
+        toast.error(
+          <div className="text-sm">
+            <p className="font-bold flex items-center gap-1.5 mb-1"><AlertCircle size={14} /> Invalid email format</p>
+            <p className="text-xs text-gray-200">Please fix the email for: {badEmails.map((p) => p.name || 'Unnamed').join(', ')}</p>
+          </div>
+        );
+        return false;
+      }
+    }
+
+    if (step === 3) {
+      const namedParticipants = form.participants.filter((p) => p.name.trim());
+      if (namedParticipants.length === 0) {
+        toast.error('Please add at least one named participant before continuing.');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const next = () => {
+    if (!validateStep()) return;
+    setStep((s) => Math.min(s + 1, 5) as StepIndex);
+  };
 
   const handleCreate = async () => {
     try {
@@ -62,7 +124,7 @@ export default function NewPardnaPage() {
   const isSummary = step === 4;
 
   return (
-    <div className="animate-fade-in pb-28">
+    <div className="animate-fade-in pb-36">
       {/* ── Elegant Header ── */}
       <div className="flex items-center gap-3 mb-5">
         <button
@@ -147,7 +209,7 @@ export default function NewPardnaPage() {
 
       {/* ── Bottom Navigation ── */}
       {!isDone && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 p-4 z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+16px)] z-[60]">
           <div className="max-w-xl mx-auto grid grid-cols-2 gap-3">
             <button
               onClick={() => (step === 0 ? navigate('/dashboard') : back())}
