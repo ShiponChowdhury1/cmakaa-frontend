@@ -17,7 +17,6 @@ import {
   FileText,
   Clock,
   UserCheck,
-  MessageSquare,
   ShieldCheck,
   Activity,
   Layers

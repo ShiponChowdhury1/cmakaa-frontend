@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { X, Printer, Calendar, ShieldCheck, Activity, Award } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -22,12 +21,6 @@ interface Props {
 /* ── helpers ── */
 const scoreColor = (s: number) =>
   s >= 88 ? '#16A34A' : s >= 65 ? '#E57432' : s >= 55 ? '#3B82F6' : '#EF4444';
-
-const scoreBgColor = (s: number) =>
-  s >= 88 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-  s >= 65 ? 'bg-orange-50 text-orange-700 border-orange-200' :
-  s >= 55 ? 'bg-blue-50 text-blue-700 border-blue-200' :
-  'bg-red-50 text-red-700 border-red-200';
 
 const scoreRingColor = (s: number) =>
   s >= 88 ? '#16A34A' : s >= 65 ? '#E57432' : s >= 55 ? '#3B82F6' : '#EF4444';
