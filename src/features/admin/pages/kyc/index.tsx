@@ -204,7 +204,7 @@ export default function KycReviewPage() {
               {pendingKyc.map((k: AdminKycApplication) => (
                 <div
                   key={k.id}
-                  className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-amber-100 bg-amber-50/40 hover:bg-amber-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-amber-100 bg-amber-50/40 hover:bg-amber-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {/* Amber clock icon */}
@@ -228,7 +228,7 @@ export default function KycReviewPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0 sm:ml-4 w-full sm:w-auto justify-end">
                     {/* Details View Eye Button */}
                     <button
                       onClick={() => setViewingKyc(k)}
@@ -317,7 +317,7 @@ export default function KycReviewPage() {
               {processedKyc.map((k: AdminKycApplication) => (
                 <div
                   key={k.id}
-                  className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     {/* Status icon */}
@@ -340,7 +340,7 @@ export default function KycReviewPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0 sm:ml-4 w-full sm:w-auto justify-end">
                     {/* Details View Eye Button */}
                     <button
                       onClick={() => setViewingKyc(k)}
