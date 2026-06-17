@@ -11,6 +11,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  preview: {
+    allowedHosts: ['pardnabook.com'],
+  },
   plugins: [
     react(),
     tailwindcss(),
